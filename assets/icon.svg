@@ -1,2 +1,61 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Rin Harbor app icon">
-  <image href="data:image/png;base64,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
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Rin Harbor yacht app icon">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#138df4"/>
+      <stop offset="0.58" stop-color="#45c7ff"/>
+      <stop offset="1" stop-color="#82e3ff"/>
+    </linearGradient>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#16c7f3"/>
+      <stop offset="1" stop-color="#0877c8"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0d4e9d"/>
+      <stop offset="0.55" stop-color="#0c73d9"/>
+      <stop offset="1" stop-color="#74d8ff"/>
+    </linearGradient>
+    <linearGradient id="hull" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.78" stop-color="#edf5ff"/>
+      <stop offset="1" stop-color="#dcecff"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#064d85" flood-opacity="0.22"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="92" fill="url(#sky)"/>
+  <g opacity="0.95">
+    <path d="M65 99c28-30 83-23 98 15 22-10 55 7 60 32 25-1 43 11 49 29H45c-18-42 6-70 45-65 5-4 11-8 18-11z" fill="#fff" opacity="0.9"/>
+    <path d="M392 111c26-27 74-22 89 12 22-4 42 9 49 30v20H355c-13-31 7-60 37-62z" fill="#fff" opacity="0.88"/>
+  </g>
+  <g transform="translate(333 129)" filter="url(#shadow)">
+    <path d="M61 0l41 31H20z" fill="#ee4f53"/>
+    <rect x="25" y="31" width="72" height="28" rx="8" fill="#fff"/>
+    <rect x="40" y="59" width="43" height="210" rx="13" fill="#fff"/>
+    <path d="M40 92h43v42H40zm0 88h43v42H40z" fill="#ee5c61"/>
+    <rect x="52" y="72" width="18" height="28" rx="7" fill="#145c9f"/>
+    <rect x="51" y="237" width="20" height="31" rx="10" fill="#33445b"/>
+    <path d="M24 59h75" stroke="#2c4966" stroke-width="5" stroke-linecap="round"/>
+  </g>
+  <path d="M0 329c69-35 130 22 203-7 76-31 125-37 190 1 47 28 85 19 119 6v183H0z" fill="url(#sea)"/>
+  <path d="M0 393c55-22 103 23 160 2 73-26 117-32 184-3 56 24 110 23 168-1" fill="none" stroke="#8feaff" stroke-width="12" opacity="0.65"/>
+  <path d="M16 436c68-29 117 20 188-6 70-25 121-27 181 2 45 21 88 20 127 1" fill="none" stroke="#67d9ff" stroke-width="10" opacity="0.7"/>
+  <g transform="translate(59 156)" filter="url(#shadow)">
+    <path d="M133 118c21-57 71-83 157-72 38 5 67 25 94 72z" fill="#f9fdff"/>
+    <path d="M169 77h132c26 0 49 16 66 46H136c8-20 18-35 33-46z" fill="url(#glass)"/>
+    <path d="M191 42h89c8 0 14 6 14 14v21H177V56c0-8 6-14 14-14z" fill="#fff"/>
+    <path d="M230 42V8m-23 21h46" stroke="#fff" stroke-width="12" stroke-linecap="round"/>
+    <path d="M43 184c58-59 168-82 305-65 49 6 85 30 115 65l-37 63H76z" fill="url(#hull)"/>
+    <path d="M74 214h336l-23 33H88z" fill="#0f4e9a"/>
+    <path d="M60 183c78 10 276 13 399 0" fill="none" stroke="#fff" stroke-width="17" stroke-linecap="round" opacity="0.95"/>
+    <path d="M107 169c84 10 189 9 284-2" fill="none" stroke="#d6e9ff" stroke-width="8" stroke-linecap="round"/>
+    <circle cx="169" cy="215" r="13" fill="#123b78"/>
+    <circle cx="215" cy="216" r="13" fill="#123b78"/>
+    <circle cx="261" cy="217" r="13" fill="#123b78"/>
+    <rect x="336" y="198" width="43" height="38" rx="10" fill="#edf5ff"/>
+    <path d="M348 216c15-11 19-3 18 14" fill="none" stroke="#42546e" stroke-width="6" stroke-linecap="round"/>
+    <path d="M68 256c45 21 93-14 138 6s92 5 128-6 69 0 100 9" fill="none" stroke="#fff" stroke-width="18" stroke-linecap="round"/>
+  </g>
+  <path d="M76 319c38 12 77 8 114-9m87-172c27-11 51-12 75-1" stroke="#ffffff" stroke-width="7" stroke-linecap="round" opacity="0.55"/>
+  <path d="M299 91c20-20 42-19 59 0 18-17 35-19 51-6" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round" opacity="0.9"/>
+</svg>
