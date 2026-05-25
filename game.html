@@ -6,7 +6,7 @@
 <title>リンハーバー</title>
 <meta name="theme-color" content="#63d5ff">
 <style>
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#ddf8ff;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic',sans-serif}iframe{width:100%;height:100dvh;border:0;display:block;background:#ddf8ff}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#ddf8ff;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic',sans-serif}iframe{width:100%;height:100dvh;border:0;display:block;background:#ddf8ff}.repairEvent{background:#fff;border:2px solid rgba(39,57,71,.14);border-radius:22px;padding:10px;box-shadow:0 8px 18px #12608018;display:grid;grid-template-columns:112px 1fr;gap:10px;min-height:168px}.repairInfo{display:flex;flex-direction:column;gap:6px}.repairInfo b{font-size:15px}.repairInfo small{font-weight:900;color:#58707c}.repairVisual{position:relative;border-radius:18px;overflow:hidden;min-height:150px;background:linear-gradient(180deg,#4e6070,#1e4058)}.repairVisual.stage1{background:linear-gradient(180deg,#7fb7d8,#70c6e8 62%,#4aa6c5)}.repairVisual.stage2{background:linear-gradient(180deg,#9bdcff,#59cce8 62%,#37aebf)}.repairVisual.stage3{background:linear-gradient(180deg,#8ed8ff,#4dc2ee 62%,#2b9fd0)}.repairVisual.stage4{background:linear-gradient(180deg,#6fcfff,#40bdee 62%,#1594d0)}.repairVisual.stage5{background:linear-gradient(180deg,#51c7ff,#2fb4e8 62%,#0d8fd0)}.repairVisual:before{content:'';position:absolute;left:0;right:0;bottom:0;height:38%;background:linear-gradient(180deg,rgba(26,198,235,.7),rgba(0,118,196,.95));}.repairStageImg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}.repairFallbackShip{position:absolute;left:50%;top:54%;transform:translate(-50%,-50%);font-size:56px;filter:drop-shadow(0 8px 8px rgba(0,50,90,.3))}.repairFallbackShip small{display:block;font-size:28px}.repairMsg{position:absolute;left:8px;right:8px;bottom:8px;background:#ffffffe8;border:1px solid #0001;border-radius:13px;padding:6px 8px;font-weight:1000;font-size:12px}.repairBtn{width:100%;padding:9px 7px}.repairComplete{background:linear-gradient(#ff9dc5,#ff70aa)!important;color:white!important}@media(max-width:540px){.repairEvent{grid-template-columns:1fr;min-height:auto}.repairVisual{min-height:145px}.repairFallbackShip{font-size:50px}}
 </style>
 </head>
 <body>
@@ -14,19 +14,24 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#ddf8ff;fon
 <script>
 'use strict';
 const REPAIR_COSTS=[50,100,200,400,800];
+const REPAIR_TITLES=['壊れたリン号','穴をふさぐ','船体を補強する','マストを直す','客室をきれいにする','リン号完成'];
+const REPAIR_MESSAGES=['嵐でボロボロになったリン号。','船の穴をふさいだ！','船体が丈夫になった！','マストが直った！','客室がきれいになった！','リン号が完全に復活した！\n新しい冒険に出発だ！'];
+const REPAIR_SHIPS=['⛵','⛵','⛵','⛵','🛥️','🚢'];
 const MAX_REPAIR=5;
 const frame=document.getElementById('gameFrame');
 function run(code){return frame.contentWindow.eval(code)}
 function getState(){try{return JSON.parse(run('JSON.stringify({coins:S.coins,repair:+S.repair||0})'))}catch(e){return{coins:0,repair:0}}}
-function repairLabel(s){if(s.repair>=MAX_REPAIR)return 'リン号は完成したよ';return '修理 '+s.repair+'/'+MAX_REPAIR+'　必要 '+REPAIR_COSTS[s.repair]+'コイン'}
-function updateRepairButton(){const doc=frame.contentDocument;if(!doc)return;const btn=doc.getElementById('repairShipBtn');if(!btn)return;const s=getState();btn.textContent='🔧 '+repairLabel(s);btn.disabled=s.repair>=MAX_REPAIR;btn.className=s.repair>=MAX_REPAIR?'off':'good'}
+function safeRepair(v){return Math.max(0,Math.min(MAX_REPAIR,+v||0))}
+function needCost(r){return r>=MAX_REPAIR?0:REPAIR_COSTS[r]}
+function repairLabel(s){const r=safeRepair(s.repair);if(r>=MAX_REPAIR)return 'リン号は完成したよ';return '修理 '+r+'/'+MAX_REPAIR+'　必要 '+needCost(r)+'コイン'}
+function updateRepairUI(){const doc=frame.contentDocument;if(!doc)return;const s=getState(),r=safeRepair(s.repair),cost=needCost(r);const btn=doc.getElementById('repairShipBtn');const title=doc.getElementById('repairStageTitle');const sub=doc.getElementById('repairStageSub');const visual=doc.getElementById('repairVisual');const img=doc.getElementById('repairStageImg');const msg=doc.getElementById('repairEventMsg');const ship=doc.getElementById('repairFallbackShip');if(title)title.textContent=REPAIR_TITLES[r];if(sub)sub.textContent=r>=MAX_REPAIR?'完成済み':('必要コイン '+cost+' / 所持 '+s.coins);if(msg)msg.textContent=REPAIR_MESSAGES[r];if(ship)ship.textContent=REPAIR_SHIPS[r];if(visual){visual.className='repairVisual stage'+r;}if(img){img.src='assets/repair-stage-'+r+'.png';img.alt=REPAIR_TITLES[r];}if(btn){btn.textContent=r>=MAX_REPAIR?'🚢 リン号は完成したよ':'🔧 '+cost+'コインで修理';btn.disabled=r>=MAX_REPAIR;btn.className=r>=MAX_REPAIR?'repairBtn repairComplete':'repairBtn good';}}
 function installRepair(){const w=frame.contentWindow,doc=frame.contentDocument;if(!w||!doc||!doc.querySelector)return;try{run("S.repair=Math.max(0,Math.min(5,+S.repair||0));saveNow();");}catch(e){}
- const grid=doc.querySelector('.homeGrid');if(grid&&!doc.getElementById('repairShipCard')){const card=doc.createElement('div');card.className='menuCard';card.id='repairShipCard';card.innerHTML='<span class="menuIcon">🔧</span><b>船の修理</b><span>コインの使い道</span><button id="repairShipBtn" class="good">🔧 修理</button>';grid.appendChild(card);const btn=card.querySelector('#repairShipBtn');btn.addEventListener('pointerdown',ev=>{ev.preventDefault();repairShip();},{passive:false});}
+ const grid=doc.querySelector('.homeGrid');if(grid&&!doc.getElementById('repairShipCard')){const card=doc.createElement('div');card.className='repairEvent';card.id='repairShipCard';card.innerHTML='<div class="repairInfo"><span class="menuIcon">🔧</span><b>船の修理</b><small id="repairStageTitle">壊れたリン号</small><small id="repairStageSub">必要コイン</small><button id="repairShipBtn" class="repairBtn good">🔧 修理</button></div><div id="repairVisual" class="repairVisual stage0"><img id="repairStageImg" class="repairStageImg" src="assets/repair-stage-0.png" alt="壊れたリン号" onerror="this.style.display=\'none\'"><div id="repairFallbackShip" class="repairFallbackShip">⛵</div><div id="repairEventMsg" class="repairMsg">嵐でボロボロになったリン号。</div></div>';grid.appendChild(card);const btn=card.querySelector('#repairShipBtn');btn.addEventListener('pointerdown',ev=>{ev.preventDefault();repairShip();},{passive:false});}
  try{if(!w.__rinRepairPatched){run("window.__rinRepairPatched=true;const __oldNormalize=normalize;normalize=function(){__oldNormalize();S.repair=Math.max(0,Math.min(5,+S.repair||0));};const __oldStatsHtml=statsHtml;statsHtml=function(){return __oldStatsHtml().replace(/<small>注文Lv<\\/small><b>.*?<\\/b>/,'<small>修理</small><b>'+((+S.repair||0))+'/5</b>');};const __oldMiniStats=miniStats;miniStats=function(){return __oldMiniStats().replace(/<span>注文Lv.*?<\\/span>/,'<span>🔧'+((+S.repair||0))+'/5</span>');};");}}
  catch(e){}
- updateRepairButton();}
-function repairShip(){try{run("S.repair=Math.max(0,Math.min(5,+S.repair||0));const costs=[50,100,200,400,800];if(S.repair>=5){say('リン号は完成したよ');}else if(S.coins<costs[S.repair]){say('コインが足りないよ');}else{S.coins-=costs[S.repair];S.repair++;say('船を修理したよ');saveNow();renderAll();}");}catch(e){}updateRepairButton();}
-frame.addEventListener('load',()=>{setTimeout(installRepair,200);setInterval(updateRepairButton,1000);});
+ updateRepairUI();}
+function repairShip(){try{run("S.repair=Math.max(0,Math.min(5,+S.repair||0));const costs=[50,100,200,400,800];const msgs=['船の穴をふさいだ！','船体が丈夫になった！','マストが直った！','客室がきれいになった！','リン号が完成した！'];if(S.repair>=5){say('リン号が完全に復活した！ 新しい冒険に出発だ！');}else if(S.coins<costs[S.repair]){say('コインが足りないよ');}else{S.coins-=costs[S.repair];S.repair++;say(msgs[S.repair-1]);saveNow();renderAll();}");}catch(e){}updateRepairUI();}
+frame.addEventListener('load',()=>{setTimeout(installRepair,200);setInterval(updateRepairUI,900);});
 </script>
 </body>
 </html>
