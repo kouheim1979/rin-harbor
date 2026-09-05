@@ -5,7 +5,15 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>リンハーバー</title>
 <meta http-equiv="refresh" content="0;url=./index.html">
-<script>location.replace('./index.html'+location.search+location.hash);</script>
+<script>
+(function(){
+  const target='./index.html'+location.search+location.hash;
+  try{
+    if(window.top!==window.self){window.top.location.replace(target);return;}
+  }catch(_e){}
+  location.replace(target);
+})();
+</script>
 </head>
-<body><a href="./index.html">リンハーバーを開く</a></body>
+<body><a href="./index.html" target="_top">リンハーバーを開く</a></body>
 </html>
