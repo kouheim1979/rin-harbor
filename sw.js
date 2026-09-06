@@ -1,38 +1,54 @@
 'use strict';
-const CACHE='rin-harbor-premium-v3-art';
-const CORE=[
-  './','./index.html','./base.css','./premium.css',
-  './game-data.js','./game-engine-a.js','./game-engine-b.js','./game-engine-c.js',
-  './manifest.webmanifest','./apple-touch-icon.png',
-  './assets/icon.png','./assets/icon-192.png','./assets/icon-512.png',
-  './assets/hero-opening.webp','./assets/repair-stage-0.jpg',
-  './assets/repair-stage-1.webp','./assets/repair-stage-2.webp','./assets/repair-stage-3.webp',
-  './assets/repair-stage-4.webp','./assets/repair-stage-5.webp'
-];
+// Versioned app shell + artwork. Only this game's caches and URLs are touched.
+const VERSION='20260906-r1';
+const PREFIX='rin-harbor-';
+const CACHE=PREFIX+VERSION;
+const ROOT=new URL('./',self.location.href);
+const url=path=>new URL(path,ROOT).href;
+const CORE=['index.html','base.css?v=20260906r1','premium.css?v=20260906r1','art.css?v=20260906r1','game.js?v=20260906r1','manifest.webmanifest','assets/art-v1/hero.jpg',...Array.from({length:6},(_,i)=>`assets/art-v1/repair-${i}.jpg`),'assets/art-v1/icon-180.png','assets/art-v1/icon-192.png','assets/art-v1/icon-512.png'];
 self.addEventListener('install',event=>{
-  event.waitUntil(caches.open(CACHE).then(async cache=>{
-    await Promise.all(CORE.map(async url=>{
-      try{const response=await fetch(url,{cache:'reload'});if(response&&response.ok)await cache.put(url,response)}catch(_e){}
-    }));
-  }).then(()=>self.skipWaiting()));
+  event.waitUntil((async()=>{
+    const cache=await caches.open(CACHE);
+    await cache.addAll(CORE.map(path=>new Request(url(path),{cache:'reload'})));
+    await self.skipWaiting();
+  })());
 });
 self.addEventListener('activate',event=>{
-  event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim()));
+  event.waitUntil((async()=>{
+    for(const name of await caches.keys())if(name.startsWith(PREFIX)&&name!==CACHE)await caches.delete(name);
+    await self.clients.claim();
+  })());
+});
+self.addEventListener('message',event=>{
+  if(event.data?.type==='READY')event.ports[0]?.postMessage({version:VERSION});
 });
 self.addEventListener('fetch',event=>{
-  if(event.request.method!=='GET')return;
-  const url=new URL(event.request.url);
-  if(url.origin!==self.location.origin)return;
-  const fresh=event.request.mode==='navigate'||event.request.destination==='document'||event.request.destination==='image';
-  if(fresh){
-    event.respondWith(fetch(new Request(event.request,{cache:'reload'})).then(response=>{
-      if(response&&response.ok){const copy=response.clone();caches.open(CACHE).then(cache=>cache.put(event.request,copy))}
-      return response;
-    }).catch(()=>caches.match(event.request).then(hit=>hit||caches.match('./index.html'))));
+  const request=event.request,requested=new URL(request.url);
+  if(request.method!=='GET'||requested.origin!==ROOT.origin||!requested.pathname.startsWith(ROOT.pathname))return;
+  if(request.mode==='navigate'){
+    event.respondWith((async()=>{
+      const cache=await caches.open(CACHE),controller=new AbortController();
+      const timeout=setTimeout(()=>controller.abort(),3500);
+      try{
+        const response=await fetch(request,{signal:controller.signal,cache:'no-cache'});
+        if(response.ok&&response.headers.get('content-type')?.includes('text/html')){
+          // Do not replace the app shell with a redirect page or an error page.
+          if(requested.pathname===ROOT.pathname||requested.pathname===new URL('index.html',ROOT).pathname)await cache.put(url('index.html'),response.clone());
+          return response;
+        }
+        return await cache.match(url('index.html'))||response;
+      }catch(_e){return await cache.match(url('index.html'))||Response.error()}
+      finally{clearTimeout(timeout)}
+    })());
     return;
   }
-  event.respondWith(caches.match(event.request).then(hit=>hit||fetch(event.request).then(response=>{
-    if(response&&response.ok){const copy=response.clone();caches.open(CACHE).then(cache=>cache.put(event.request,copy))}
-    return response;
-  })));
+  event.respondWith((async()=>{
+    const cache=await caches.open(CACHE),hit=await cache.match(request);
+    if(hit)return hit;
+    try{
+      const response=await fetch(request);
+      if(response.ok&&response.type==='basic')await cache.put(request,response.clone());
+      return response;
+    }catch(_e){return Response.error()}
+  })());
 });
