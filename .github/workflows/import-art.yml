@@ -1,0 +1,67 @@
+name: Import validated Rin Harbor artwork
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/import-art.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: rin-art-import
+  cancel-in-progress: false
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Verify artwork and commit binary assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+        shell: python
+        run: |
+          import os, json, hashlib, base64, urllib.request, time
+          from concurrent.futures import ThreadPoolExecutor
+          assets = [
+            ('assets/art-v1/hero.jpg', '3fd54848f06e50d11e525d0f7ae144955760134305d0d2e42cc937dbdb4b782c', 'https://oaisdmntprsoutheastus3.blob.core.windows.net/files/00000000-e4c8-820c-9cb6-bd7b51fe486e/raw?se=2026-09-06T11%3A07%3A07Z&sp=r&sv=2026-02-06&sr=b&scid=01a07659-99a0-7bb4-b22c-0d53db8105f0&skoid=bb372dd6-3b2a-4af2-b355-c26497ba23cd&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-06T06%3A39%3A32Z&ske=2026-09-07T06%3A39%3A32Z&sks=b&skv=2026-02-06&sig=0VrLd%2BwzzC6nCmYjGDes1J6KaO4OAB3T65rqq5TLeVY%3D'),
+            ('assets/art-v1/repair-0.jpg', 'e2400c540da65e2e849affcd99edd38d7b1eefc7c5ffcd30f3309945606bf0c5', 'https://oaisdmntprnorthcentralus.blob.core.windows.net/files/00000000-e55c-822f-8b14-7be0c4bcb7b4/raw?se=2026-09-06T11%3A07%3A06Z&sp=r&sv=2026-02-06&sr=b&scid=01a07659-99a0-7bb4-b22c-0d53db8105f0&skoid=bb372dd6-3b2a-4af2-b355-c26497ba23cd&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-06T06%3A39%3A32Z&ske=2026-09-07T06%3A39%3A32Z&sks=b&skv=2026-02-06&sig=S0WsuAT68WyWRSvYNTK1laql0BItocCKENy3RoqK%2Bn0%3D'),
+            ('assets/art-v1/repair-1.jpg', 'a36405b3e4288fbb16c0d46ad0ab7e1c6bb660e870f0fdb1142719e28e1045b2', 'https://oaisdmntpraustraliaeast.blob.core.windows.net/files/00000000-d60c-81fa-8acc-dc8d16d63376/raw?se=2026-09-06T11%3A07%3A06Z&sp=r&sv=2026-02-06&sr=b&scid=01a07659-99a0-7bb4-b22c-0d53db8105f0&skoid=bb372dd6-3b2a-4af2-b355-c26497ba23cd&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-06T06%3A38%3A54Z&ske=2026-09-07T06%3A38%3A54Z&sks=b&skv=2026-02-06&sig=6hvTCvuoygtvDJ%2Br0/Vir/SGWwBaf7kThjCQJZ8RC78%3D'),
+            ('assets/art-v1/repair-2.jpg', '3dddebc3bc4415ba6e1c38f43f8ea99acbeaccab419e8aaddf04ceb96a5e9e81', 'https://oaisdmntprindiasocentral.blob.core.windows.net/files/00000000-ff20-8211-88ad-035bd8652a74/raw?se=2026-09-06T11%3A07%3A06Z&sp=r&sv=2026-02-06&sr=b&scid=01a07659-99a0-7bb4-b22c-0d53db8105f0&skoid=bb372dd6-3b2a-4af2-b355-c26497ba23cd&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-06T01%3A03%3A32Z&ske=2026-09-07T01%3A03%3A32Z&sks=b&skv=2026-02-06&sig=LG0Zo9LoiGeSN6eRhbm0LK8SLowSGxmNRuW1u4Zr2y4%3D'),
+            ('assets/art-v1/repair-3.jpg', 'f17de6c82d3b081b00f56b36f91dab293a07b398dc09ccbc31a35869da1682a1', 'https://oaisdmntprnorthcentralus.blob.core.windows.net/files/00000000-034c-822f-aa7e-45592453000c/raw?se=2026-09-06T11%3A07%3A07Z&sp=r&sv=2026-02-06&sr=b&scid=01a07659-99a0-7bb4-b22c-0d53db8105f0&skoid=bb372dd6-3b2a-4af2-b355-c26497ba23cd&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-06T06%3A38%3A55Z&ske=2026-09-07T06%3A38%3A55Z&sks=b&skv=2026-02-06&sig=4iwLmsBGMd3LjqZyLVTAp7qZiMNnOPimHiPEDpxxiK0%3D'),
+            ('assets/art-v1/repair-4.jpg', '27a4a0d27c4b05ed53818cf3a996b1dc81f4bc09c03ce3f18c6645c025450131', 'https://oaisdmntprcentralus.blob.core.windows.net/files/00000000-7ed0-81f5-8677-714060983f1a/raw?se=2026-09-06T11%3A07%3A06Z&sp=r&sv=2026-02-06&sr=b&scid=01a07659-99a0-7bb4-b22c-0d53db8105f0&skoid=bb372dd6-3b2a-4af2-b355-c26497ba23cd&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-05T22%3A17%3A28Z&ske=2026-09-06T22%3A17%3A28Z&sks=b&skv=2026-02-06&sig=z7MHj0cti1P1laQW0KwjKr1J5jc9bSDLGcxhjU3oMWE%3D'),
+            ('assets/art-v1/repair-5.jpg', '55c333e0c0ffbdd03db97a8138daa25bb79cd1dffac2f0358e10898aaebce6d2', 'https://oaisdmntprcentralus.blob.core.windows.net/files/00000000-f610-81f5-8637-63b4e624c75d/raw?se=2026-09-06T11%3A07%3A06Z&sp=r&sv=2026-02-06&sr=b&scid=01a07659-99a0-7bb4-b22c-0d53db8105f0&skoid=bb372dd6-3b2a-4af2-b355-c26497ba23cd&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-06T05%3A09%3A34Z&ske=2026-09-07T05%3A09%3A34Z&sks=b&skv=2026-02-06&sig=nt5a/la%2BFURgvSI63rPVEP/ucET9NgmPUeiHqH/EgKM%3D'),
+            ('assets/art-v1/icon-180.png', 'fe99cbb5036bcbf9fb0218eecb496b66dfb3f8b456cdf7016b8087ca129a1b7f', 'https://oaisdmntprcentralus.blob.core.windows.net/files/00000000-69a4-81f5-9547-82b60d2f8c35/raw?se=2026-09-06T11%3A07%3A06Z&sp=r&sv=2026-02-06&sr=b&scid=01a07659-99a0-7bb4-b22c-0d53db8105f0&skoid=bb372dd6-3b2a-4af2-b355-c26497ba23cd&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-05T22%3A44%3A38Z&ske=2026-09-06T22%3A44%3A38Z&sks=b&skv=2026-02-06&sig=MtugcwyPfxonu3TFYU7bict/97YWrDOp/k0idlmQYGo%3D'),
+            ('assets/art-v1/icon-192.png', '649a01678938033c867b886c3fa5529902a9b41f28855b1a03e5a6cf419856dc', 'https://oaisdmntprcentralus.blob.core.windows.net/files/00000000-ad64-81f5-b1cc-e7ef68f44842/raw?se=2026-09-06T11%3A07%3A06Z&sp=r&sv=2026-02-06&sr=b&scid=01a07659-99a0-7bb4-b22c-0d53db8105f0&skoid=bb372dd6-3b2a-4af2-b355-c26497ba23cd&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-06T01%3A35%3A56Z&ske=2026-09-07T01%3A35%3A56Z&sks=b&skv=2026-02-06&sig=fPNbc4I%2BH2rgG0E1EF7eOdmIzRecRnVB1xxsUBXS6Wc%3D'),
+            ('assets/art-v1/icon-512.png', 'bdd2ee4e0c7696de33c9a7624a7a67bfd44afe2e07c72b17970f652fe6be1b19', 'https://oaisdmntprcentralus.blob.core.windows.net/files/00000000-9118-81f5-86d9-01eac8428caa/raw?se=2026-09-06T11%3A07%3A06Z&sp=r&sv=2026-02-06&sr=b&scid=01a07659-99a0-7bb4-b22c-0d53db8105f0&skoid=bb372dd6-3b2a-4af2-b355-c26497ba23cd&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-05T22%3A20%3A27Z&ske=2026-09-06T22%3A20%3A27Z&sks=b&skv=2026-02-06&sig=YxUPUqYph7urooR/6h/0y/buLobPP8rGNznfI6lL7j8%3D')
+          ]
+          def download(asset):
+              path, digest, url = asset
+              for attempt in range(3):
+                  try:
+                      with urllib.request.urlopen(url, timeout=60) as r: data = r.read(8_000_001)
+                      assert len(data) < 8_000_000, 'oversize'
+                      assert hashlib.sha256(data).hexdigest() == digest, 'checksum mismatch: '+path
+                      assert data.startswith(b'\xff\xd8') or data.startswith(b'\x89PNG'), 'invalid image'
+                      print('Verified',path,len(data))
+                      return path, digest, data
+                  except Exception:
+                      if attempt == 2: raise
+                      time.sleep(2)
+          with ThreadPoolExecutor(max_workers=5) as pool: verified=list(pool.map(download,assets))
+          base='https://api.github.com/repos/'+os.environ['REPOSITORY']
+          def api(method,path,payload=None):
+              data=None if payload is None else json.dumps(payload).encode()
+              req=urllib.request.Request(base+path,data=data,method=method,headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','Content-Type':'application/json','User-Agent':'rin-harbor-publisher'})
+              with urllib.request.urlopen(req,timeout=60) as response: return json.load(response)
+          head=api('GET','/git/ref/heads/main')['object']['sha']
+          parent=api('GET','/git/commits/'+head)
+          entries=[]
+          for path,digest,data in verified:
+              sha=api('POST','/git/blobs',{'content':base64.b64encode(data).decode(),'encoding':'base64'})['sha']
+              entries.append({'path':path,'mode':'100644','type':'blob','sha':sha})
+          manifest=[{'path':p,'sha256':h,'bytes':len(b)} for p,h,b in verified]
+          entries.append({'path':'assets/art-v1/manifest.json','mode':'100644','type':'blob','content':json.dumps(manifest,indent=2)+'\n'})
+          tree=api('POST','/git/trees',{'base_tree':parent['tree']['sha'],'tree':entries})['sha']
+          commit=api('POST','/git/commits',{'message':'feat: add seven original illustrations and verified app icons','tree':tree,'parents':[head]})['sha']
+          api('PATCH','/git/refs/heads/main',{'sha':commit,'force':False})
+          print('Published artwork commit:',commit)
