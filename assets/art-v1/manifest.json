@@ -1,0 +1,52 @@
+[
+  {
+    "path": "assets/art-v1/hero.jpg",
+    "sha256": "3fd54848f06e50d11e525d0f7ae144955760134305d0d2e42cc937dbdb4b782c",
+    "bytes": 302363
+  },
+  {
+    "path": "assets/art-v1/repair-0.jpg",
+    "sha256": "e2400c540da65e2e849affcd99edd38d7b1eefc7c5ffcd30f3309945606bf0c5",
+    "bytes": 433167
+  },
+  {
+    "path": "assets/art-v1/repair-1.jpg",
+    "sha256": "a36405b3e4288fbb16c0d46ad0ab7e1c6bb660e870f0fdb1142719e28e1045b2",
+    "bytes": 399766
+  },
+  {
+    "path": "assets/art-v1/repair-2.jpg",
+    "sha256": "3dddebc3bc4415ba6e1c38f43f8ea99acbeaccab419e8aaddf04ceb96a5e9e81",
+    "bytes": 426976
+  },
+  {
+    "path": "assets/art-v1/repair-3.jpg",
+    "sha256": "f17de6c82d3b081b00f56b36f91dab293a07b398dc09ccbc31a35869da1682a1",
+    "bytes": 390410
+  },
+  {
+    "path": "assets/art-v1/repair-4.jpg",
+    "sha256": "27a4a0d27c4b05ed53818cf3a996b1dc81f4bc09c03ce3f18c6645c025450131",
+    "bytes": 411929
+  },
+  {
+    "path": "assets/art-v1/repair-5.jpg",
+    "sha256": "55c333e0c0ffbdd03db97a8138daa25bb79cd1dffac2f0358e10898aaebce6d2",
+    "bytes": 405420
+  },
+  {
+    "path": "assets/art-v1/icon-180.png",
+    "sha256": "fe99cbb5036bcbf9fb0218eecb496b66dfb3f8b456cdf7016b8087ca129a1b7f",
+    "bytes": 73958
+  },
+  {
+    "path": "assets/art-v1/icon-192.png",
+    "sha256": "649a01678938033c867b886c3fa5529902a9b41f28855b1a03e5a6cf419856dc",
+    "bytes": 83398
+  },
+  {
+    "path": "assets/art-v1/icon-512.png",
+    "sha256": "bdd2ee4e0c7696de33c9a7624a7a67bfd44afe2e07c72b17970f652fe6be1b19",
+    "bytes": 482661
+  }
+]
