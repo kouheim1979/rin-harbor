@@ -1,4 +1,4 @@
-"""User-facing regression gates. Disposables only; never read a real player's browser."""
+"""User-facing regression gates. Disposable browsers only, never player data."""
 import hashlib, itertools, json, os, urllib.request
 from pathlib import Path
 from playwright.sync_api import sync_playwright
@@ -7,16 +7,16 @@ URL=os.environ.get('BASE_URL','http://127.0.0.1:8765/').rstrip('/')+'/'
 OUT=Path(os.environ.get('RESULT_DIR','test-results'))/'atelier4';OUT.mkdir(parents=True,exist_ok=True)
 RESULTS=[]
 def check(name,ok,detail=''):
-    if not ok: raise AssertionError(f'{name}: {detail}')
+    if not ok:raise AssertionError(f'{name}: {detail}')
     RESULTS.append({'test':name,'result':'passed'})
 def fetch(name):
     with urllib.request.urlopen(URL+name,timeout=45) as r:return r.read()
 def visible(page,sel):
-    b=page.locator(sel).bounding_box();return bool(b and b['width']>0 and b['height']>0 and b['x']>=-1 and b['y']>=-1 and b['x']+b['width']<=page.viewport_size['width']+1 and b['y']+b['height']<=page.viewport_size['height']+1)
+    b=page.locator(sel).bounding_box()
+    return bool(b and b['width']>0 and b['height']>0 and b['x']>=-1 and b['y']>=-1 and b['x']+b['width']<=page.viewport_size['width']+1 and b['y']+b['height']<=page.viewport_size['height']+1)
 def fresh(page):
     page.evaluate("closeAlbum();normalize({...freshState(),daily:S.daily,auto:false,autoStory:false});selected=null;undoState=null;setView('game')")
-def total(page):
-    return page.evaluate('S.board.filter(x=>x&&!isGen(x)).length+warehouseUsed()')
+def total(page):return page.evaluate('S.board.filter(x=>x&&!isGen(x)).length+warehouseUsed()')
 def reload(page):
     page.reload(wait_until='networkidle');page.wait_for_function("typeof S!=='undefined' && RELEASE==='20260908-atelier4'")
 def suite(browser,engine):
@@ -39,15 +39,21 @@ def suite(browser,engine):
         page.locator('#openWarehouse').click();check(engine+' stored card visible',page.locator('[data-stored-item="drink1"]').is_visible())
         page.locator('#warehouseUndo').click();check(engine+' deposit undo conserves inventory',page.evaluate("S.board[7]==='drink1'&&!S.warehouse.drink1") and total(page)==n)
         page.locator('#nav [data-go="game"]').click()
-        for i in (7,8):page.locator(f'.cell[data-i="{i}"]').tap();page.locator('#store').click()
+        for i in (7,8):
+            page.locator(f'.cell[data-i="{i}"]').tap();page.locator('#store').click()
         page.locator('#nav [data-go="warehouse"]').click()
         check(engine+' stacking two identical items',page.locator('[data-stored-item="drink1"]').count()==1 and page.evaluate('S.warehouse.drink1===2'))
         page.locator('[data-take="drink1"]').click()
         check(engine+' withdrawal conserves count',page.evaluate("S.warehouse.drink1===1&&countBoard().drink1===1") and total(page)==n)
         reload(page);check(engine+' warehouse survives actual reload',page.evaluate('S.warehouse.drink1===1') and total(page)==n)
         check(engine+' migration backup exists',page.evaluate("localStorage.getItem('rin_harbor_before_warehouse_v4')!==null"))
-        page.evaluate("localStorage.setItem(SAVE_KEY,JSON.stringify({...S,warehouse:{fish6:2,toy7:1},coins:246,repair:2}))")
-        reload(page);check(engine+' existing inventory preserved before first autosave',page.evaluate('S.warehouse.fish6===2&&S.warehouse.toy7===1&&S.coins===246'))
+        # Install a once-only fixture at the NEXT document's initialization. Seeding
+        # the live document's disk directly is overwritten by its pagehide autosave.
+        seed=page.evaluate("({...S,warehouse:{fish6:2,toy7:1},coins:246,repair:2})")
+        encoded=json.dumps(json.dumps(seed,ensure_ascii=False),ensure_ascii=False)
+        page.add_init_script("if(!sessionStorage.getItem('atelier4-migration-seeded')){localStorage.setItem('rin_harbor_save_v10',"+encoded+");sessionStorage.setItem('atelier4-migration-seeded','1');}")
+        reload(page)
+        check(engine+' existing inventory preserved before first autosave',page.evaluate('S.warehouse.fish6===2&&S.warehouse.toy7===1&&S.coins===246'))
         check(engine+' persisted inventory still present',page.evaluate("JSON.parse(localStorage.getItem(SAVE_KEY)).warehouse.fish6===2"))
         fresh(page);page.evaluate("S.warehouse={drink1:12};selected=7;renderGame()");before=page.evaluate('JSON.stringify(S)')
         check(engine+' full warehouse rejects deposit',page.locator('#store').is_disabled() and not page.evaluate('storeSelected()') and before==page.evaluate('JSON.stringify(S)'))
