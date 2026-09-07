@@ -29,7 +29,18 @@ def test_origin_offline(browser, root, check, reload_page):
     try:
         page = context.new_page()
         errors = []
-        page.on('pageerror', lambda e: errors.append(str(e)))
+        transport_errors = []
+        def record_error(error):
+            text = str(error)
+            # WebKit emits this transport failure as a pageerror when the
+            # deliberate uncached probe receives Response.error() from the SW.
+            # Only this exact message AFTER confirmed origin shutdown is expected.
+            # All JS exceptions and all errors while online remain test failures.
+            if stopped and text == 'Response served by service worker is an error':
+                transport_errors.append(text)
+            else:
+                errors.append(text)
+        page.on('pageerror', record_error)
         page.goto(f'http://127.0.0.1:{port}/', wait_until='networkidle')
         page.wait_for_function("navigator.serviceWorker.controller!==null", timeout=60000)
         page.wait_for_function("document.getElementById('offlineStatus').textContent.includes('保存済み')||document.getElementById('offlineStatus').textContent.includes('新しい')", timeout=60000)
@@ -65,6 +76,7 @@ def test_origin_offline(browser, root, check, reload_page):
         reload_page(page)
         check(label+'second offline reload saves progress', page.evaluate('S.coins===3456&&S.repair===5'))
         check(label+'no JavaScript exceptions', not errors, errors)
+        print(label+'expected transport errors: '+str(len(transport_errors)), flush=True)
     finally:
         context.close()
         if not stopped:
