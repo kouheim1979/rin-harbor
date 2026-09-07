@@ -1,11 +1,11 @@
 'use strict';
 // Versioned app shell + artwork. Only this game's caches and URLs are touched.
-const VERSION='20260907-sea2';
+const VERSION='20260907-sea2paint';
 const PREFIX='rin-harbor-';
 const CACHE=PREFIX+VERSION;
 const ROOT=new URL('./',self.location.href);
 const url=path=>new URL(path,ROOT).href;
-const CORE=['index.html','youth.css?v=sea2','item-art.js?v=sea2','game.js?v=sea2','manifest.webmanifest','assets/art-hd/hero.webp',...Array.from({length:6},(_,i)=>`assets/art-hd/repair-${i}.webp`),...Array.from({length:6},(_,i)=>`assets/art-hd/thumb-${i}.webp`),'assets/art-v1/icon-180.png','assets/art-v1/icon-192.png','assets/art-v1/icon-512.png'];
+const CORE=['index.html','youth.css?v=sea2paint','item-art.js?v=sea2paint','game.js?v=sea2paint','manifest.webmanifest','assets/art-hd/hero.webp',...Array.from({length:6},(_,i)=>`assets/art-hd/repair-${i}.webp`),...Array.from({length:6},(_,i)=>`assets/art-hd/thumb-${i}.webp`),'assets/art-v1/icon-180.png','assets/art-v1/icon-192.png','assets/art-v1/icon-512.png'];
 self.addEventListener('install',event=>{
   event.waitUntil((async()=>{
     const cache=await caches.open(CACHE);

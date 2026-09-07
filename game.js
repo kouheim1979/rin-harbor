@@ -50,7 +50,7 @@ const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 
-const RELEASE='20260907-sea2';
+const RELEASE='20260907-sea2paint';
 const BACKUP_KEY='rin_harbor_before_art_v1';
 const int=(v,lo=0,hi=1e9,fallback=0)=>Number.isFinite(Number(v))?Math.max(lo,Math.min(hi,Math.floor(Number(v)))):fallback;
 let hintTimer=null, comboTimer=null, albumIndex=0, albumReturnFocus=null, diskAvailable=true;
@@ -422,11 +422,20 @@ function sound(type){
 function bestStagePath(stage){return `assets/art-hd/repair-${int(stage,0,5)}.webp`}
 
 function setStageImage(img,stage){
-  const path=bestStagePath(stage);if(img.dataset.src===path&&img.complete&&img.naturalWidth>0)return;
-  img.dataset.src=path;img.alt=REPAIR_TITLES[int(stage,0,5)];
-  img.onload=()=>{img.style.display='block';if(img.id==='homeShipImage')$('homeShipFallback').hidden=true};
-  img.onerror=()=>{img.style.display='none';img.dataset.src='';if(img.id==='homeShipImage'){$('homeShipFallback').hidden=false;$('homeShipFallback').textContent='画像を読み込めません。港を開き直してください。'}};
-  img.src=path;if(img.complete&&img.naturalWidth>0)img.onload();
+  const path=bestStagePath(stage);
+  if(img.dataset.src===path&&img.dataset.ready==='true'&&img.complete&&img.naturalWidth>0)return;
+  img.dataset.src=path;img.dataset.ready='false';img.alt=REPAIR_TITLES[int(stage,0,5)];
+  img.decoding='sync';img.loading='eager';img.width=2880;img.height=2160;
+  const fail=()=>{if(img.dataset.src!==path)return;img.style.display='none';img.dataset.src='';img.dataset.ready='false';if(img.id==='homeShipImage'){$('homeShipFallback').hidden=false;$('homeShipFallback').textContent='画像を読み込めません。港を開き直してください。'}};
+  const show=async()=>{
+    try{if(img.decode)await img.decode()}catch(_e){if(!img.complete||!img.naturalWidth){fail();return}}
+    if(img.dataset.src!==path)return;
+    img.style.display='block';img.style.visibility='visible';
+    if(img.id==='homeShipImage')$('homeShipFallback').hidden=true;
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{if(img.dataset.src===path)img.dataset.ready='true'}));
+  };
+  img.onload=show;img.onerror=fail;img.src=path;
+  if(img.complete&&img.naturalWidth>0)show();
 }
 
 function openAlbum(index=0){
