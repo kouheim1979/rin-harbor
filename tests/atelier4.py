@@ -70,12 +70,16 @@ def suite(browser,engine):
         page.evaluate("normalize({...freshState(),daily:S.daily,warehouse:{drink1:19}})")
         check(engine+' overcapacity save is not truncated',page.evaluate('S.warehouse.drink1===19'))
         page.evaluate("takeFromWarehouse('drink1')");check(engine+' overcapacity save can withdraw',page.evaluate('S.warehouse.drink1===18'))
+        # Inline HTML SVGs acquire their namespace from the HTML parser. Standalone
+        # XML fixtures must declare it BEFORE XML parsing, especially in WebKit.
         masks=page.evaluate('''async()=>{const out={};for(const id of Object.keys(ITEM_SHAPES)){
-          const svg=new DOMParser().parseFromString(itemArt(id),'image/svg+xml').documentElement;
-          svg.setAttribute('xmlns','http://www.w3.org/2000/svg');svg.removeAttribute('data-art');
-          svg.setAttribute('width','68');svg.setAttribute('height','68');
+          const xml=itemArt(id).replace('<svg ','<svg xmlns="http://www.w3.org/2000/svg" ');
+          const svg=new DOMParser().parseFromString(xml,'image/svg+xml').documentElement;
+          if(svg.namespaceURI!=='http://www.w3.org/2000/svg')throw new Error('Invalid SVG namespace');
+          svg.removeAttribute('data-art');svg.setAttribute('width','68');svg.setAttribute('height','68');
           svg.querySelectorAll('*').forEach(el=>{for(const attr of ['fill','stroke']){let v=el.getAttribute(attr);if(v&&v!=='none')el.setAttribute(attr,'#000')}});
           const im=new Image(68,68);im.src='data:image/svg+xml;base64,'+btoa(new XMLSerializer().serializeToString(svg));await im.decode();
+          await new Promise(r=>requestAnimationFrame(r));
           const cv=document.createElement('canvas');cv.width=cv.height=48;const cx=cv.getContext('2d');cx.drawImage(im,0,0,48,48);
           out[id]=Array.from(cx.getImageData(0,0,48,48).data).filter((v,i)=>i%4===3).map(v=>v>128?'1':'0').join('');
         }return out}''')
