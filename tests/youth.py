@@ -36,8 +36,8 @@ def asset_checks():
             hashes.append(row['sha256'])
         else:check('Thumbnail is 480 by 360 '+row['path'],im.size==(480,360))
     check('Six different full repair images',len(set(hashes))==6)
-    check('Live CSS equals tested CSS',hashlib.sha256(fetch('youth.css?v=sea2paint')).digest()==hashlib.sha256((ROOT/'youth.css').read_bytes()).digest())
-    check('Live vector art equals tested vector art',hashlib.sha256(fetch('item-art.js?v=sea2paint')).digest()==hashlib.sha256((ROOT/'item-art.js').read_bytes()).digest())
+    check('Live CSS equals tested CSS',hashlib.sha256(fetch('youth.css?v=atelier4')).digest()==hashlib.sha256((ROOT/'youth.css').read_bytes()).digest())
+    check('Live vector art equals tested vector art',hashlib.sha256(fetch('item-art.js?v=atelier4')).digest()==hashlib.sha256((ROOT/'item-art.js').read_bytes()).digest())
 def visible_without_nav(page,selector):
     a=page.locator(selector).bounding_box();n=page.locator('#nav').bounding_box()
     return bool(a and n and a['x']>=-1 and a['y']>=-1 and (a['y']+a['height']<=n['y']+1 or a['x']+a['width']<=n['x']+1))
@@ -59,7 +59,7 @@ def suite(browser,engine):
         page=context.new_page();errors=[]
         page.on('pageerror',lambda e:errors.append(str(e)))
         page.goto(URL,wait_until='networkidle')
-        page.wait_for_function("typeof RELEASE!=='undefined' && RELEASE==='20260907-sea2paint'")
+        page.wait_for_function("typeof RELEASE!=='undefined' && RELEASE==='20260908-atelier4'")
         page.wait_for_function("document.getElementById('openingImage').complete&&document.getElementById('openingImage').naturalWidth===2880")
         page.wait_for_timeout(2200)
         check(engine+' one cohesive theme',page.locator('link[rel="stylesheet"]').count()==1 and 'youth.css' in page.locator('link[rel="stylesheet"]').get_attribute('href'))
@@ -125,4 +125,4 @@ if __name__=='__main__':
     except Exception as exc:
         RESULTS.append({'test':'Sea Journal suite','result':'failed','error':str(exc)})
         raise
-    finally:(OUT/'report.json').write_text(json.dumps({'base_url':URL,'release':'20260907-sea2paint','checks':RESULTS},ensure_ascii=False,indent=2))
+    finally:(OUT/'report.json').write_text(json.dumps({'base_url':URL,'release':'20260908-atelier4','checks':RESULTS},ensure_ascii=False,indent=2))

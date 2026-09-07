@@ -1,0 +1,53 @@
+name: Build and verify Atelier 4
+on:
+  push:
+    branches: [fix/atelier4-visible-warehouse]
+    paths: ['release-source/**', 'scripts/build_atelier4.py', 'item-art.js', 'tests/atelier4.py', '.github/workflows/build-atelier4.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - name: Integrate the warehouse into the actual application
+        run: python3 scripts/build_atelier4.py
+      - name: Install browsers
+        run: |
+          python3 -m pip install playwright==1.57.0 Pillow==11.3.0
+          python3 -m playwright install --with-deps chromium webkit
+      - name: Syntax and HTTP server
+        run: |
+          node --check game.js
+          node --check item-art.js
+          node --check sw.js
+          python3 -m http.server 8765 > /tmp/rin-http.log 2>&1 &
+      - name: Full gameplay and inventory regression gates
+        env:
+          BASE_URL: http://127.0.0.1:8765/
+          RESULT_DIR: test-results/local
+        run: |
+          python3 tests/smoke.py
+          python3 tests/youth.py
+          python3 tests/atelier4.py
+      - name: Commit only the tested application files
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html game.js youth.css sw.js warehouse.js item-art-levels.js tests/smoke.py tests/youth.py tests/origin_offline.py
+          git commit -m 'fix: ship static warehouse and preserve inventory before initial autosave'
+          git push origin HEAD:${{ github.ref_name }}
+      - name: Package tested application
+        run: git archive --format=zip --output=/tmp/rin-atelier4.zip HEAD
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: atelier4-build-and-tests
+          path: |
+            /tmp/rin-atelier4.zip
+            test-results/
+          retention-days: 14

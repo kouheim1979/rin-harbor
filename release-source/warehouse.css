@@ -1,0 +1,31 @@
+/* First-class inventory: reachable without a service worker or dynamic injection. */
+.homeGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.nav{grid-template-columns:repeat(6,minmax(0,1fr))}
+.gameHeadActions{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.gameHeadActions #autoGame{min-width:0;font-size:10px;padding:5px 7px;min-height:42px}
+#openWarehouse{display:grid;grid-template-columns:23px auto;column-gap:5px;align-items:center;padding:5px 10px;min-height:44px;background:#fff1cd;border-color:#dcbe82;color:#624c29}
+#openWarehouse svg{grid-row:1/3;width:21px;height:21px}
+#openWarehouse b{font-size:12px;line-height:1.2}#openWarehouse small{font-size:10px;line-height:1.2;font-variant-numeric:tabular-nums}
+#store{background:#087c79;color:white;border-color:#126865;box-shadow:0 3px 0 #126865}
+#store:disabled{background:#d3e3dc;color:#526e66;opacity:1;box-shadow:none;border-color:#bccfc5}
+.cell .itemArt{width:88%;height:88%;margin-bottom:4px}
+.lv{font-size:9px;color:#234e4e;background:#fffdf2;bottom:0;right:1px;padding:1px 3px;box-shadow:0 0 0 1px #e0e7d9}
+.cell.matchable{outline:2px dashed #219884;outline-offset:1px;background:#f4fff4}
+.warehouseHeading .title{font-size:26px}.warehouseHeading .top>div{min-width:0}.warehouseHeading .top>button{white-space:nowrap;flex:none}
+.warehouseHeading .sub{margin-bottom:10px}.warehouseStatus{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px}
+.warehouseStatus strong{font-size:20px;color:#246f63;margin-left:5px;font-variant-numeric:tabular-nums}
+#warehouseUndo{font-size:11px;min-height:40px;padding:6px 10px}
+.warehouseMeterTrack{height:8px;border-radius:12px;overflow:hidden;background:#dce9df;margin:10px 0}
+.warehouseMeterTrack i{display:block;height:100%;background:#479880;transition:width .15s}
+.warehouseHelp{font-size:12px;color:#59766c;margin-top:10px}.warehouseHelp summary{cursor:pointer;min-height:32px;line-height:32px}.warehouseHelp p{margin:8px 0;line-height:1.65}
+.warehouseFilters{display:flex;gap:7px;overflow:auto;padding:0 1px 10px;margin-bottom:6px;scrollbar-width:thin}
+.warehouseFilters button{flex:none;white-space:nowrap;min-height:40px;font-size:11px;padding:6px 10px;border-radius:12px;box-shadow:none}
+.warehouseFilters button.active{background:#087c79;color:white;border-color:#087c79}
+.warehouseList{display:grid;gap:10px;padding:0 0 12px}.warehouseItem{display:flex;align-items:center;gap:10px;background:#fffef9;border:1px solid #d4e2d8;border-radius:17px;padding:12px}
+.warehouseArt{flex:none;width:59px;height:59px;display:grid;place-items:center;background:#eef4e7;border-radius:13px}.warehouseArt .itemArt{width:54px;height:54px}
+.warehouseInfo{min-width:0;flex:1}.warehouseInfo small{display:block;font-size:10px;color:#5d7970}.warehouseInfo b{display:block;font-size:14px;line-height:1.5;overflow-wrap:anywhere}.warehouseInfo>span{font-size:11px;color:#8b663c}
+.warehouseItem>button{flex:none;font-size:12px;padding:8px 11px;min-height:44px}
+.warehouseEmpty{text-align:center;padding:26px 14px;border:1px dashed #b9cdbb;background:#fffcf1;border-radius:18px}.warehouseEmpty>.uiIcon{width:50px;height:50px;color:#80a78f;margin-bottom:10px}.warehouseEmpty h3{font-size:17px;margin:4px}.warehouseEmpty p{color:#657b70;line-height:1.75;font-size:12px}
+@media(min-width:700px){.homeGrid{grid-template-columns:repeat(4,minmax(0,1fr))}.warehouseList{grid-template-columns:repeat(2,minmax(0,1fr))}.warehouseEmpty{grid-column:1/-1}}
+@media(max-width:360px){.gameTitle{font-size:20px}.gameHeadActions{gap:4px}.gameHeadActions #autoGame{padding:3px 5px;min-height:36px;font-size:9px}#openWarehouse{padding:3px 6px;min-height:38px;grid-template-columns:19px auto}#openWarehouse svg{width:18px}.warehouseHeading .title{font-size:22px}.warehouseItem{padding:10px;gap:8px}.warehouseArt{width:48px;height:48px}.warehouseArt .itemArt{width:45px;height:45px}.warehouseInfo b{font-size:12px}.warehouseItem>button{padding:7px 8px;font-size:11px}}
+@media(orientation:landscape) and (max-height:540px){.nav{grid-template-columns:1fr;grid-template-rows:repeat(6,1fr)}.gameHead .eyebrow{display:none}.gameTitle{font-size:19px}.gameHeadActions{gap:4px}.gameHeadActions #autoGame{min-height:35px;font-size:9px}#openWarehouse{min-height:36px;padding:3px 6px}.warehouseList{grid-template-columns:repeat(2,minmax(0,1fr))}.warehouseInfo b{font-size:12px}}

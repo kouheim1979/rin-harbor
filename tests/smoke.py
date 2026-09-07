@@ -56,7 +56,7 @@ def open_game(page, seed=None):
         page.add_init_script('('+init+')()')
         page.goto(URL,wait_until='networkidle')
     page.wait_for_function("typeof S!=='undefined' && S!==null && typeof RELEASE!=='undefined'")
-    check('correct release',page.evaluate('RELEASE')=='20260907-sea2paint')
+    check('correct release',page.evaluate('RELEASE')=='20260908-atelier4')
     page.wait_for_timeout(180)
 
 def reload_page(page):
@@ -231,7 +231,7 @@ def run_suite(browser, engine):
         page.wait_for_function("document.getElementById('offlineStatus').textContent.includes('保存済み')||document.getElementById('offlineStatus').textContent.includes('新しい')",timeout=90000)
         page.wait_for_function('navigator.serviceWorker.controller!==null',timeout=30000)
         page.evaluate("S.auto=false;S.autoStory=false;S.coins=2345;S.repair=5;saveNow()")
-        await_cache=page.evaluate("async()=>{const c=await caches.open('rin-harbor-20260907-sea2paint');const all=await c.keys();return all.length}")
+        await_cache=page.evaluate("async()=>{const c=await caches.open('rin-harbor-20260908-atelier4');const all=await c.keys();return all.length}")
         check(engine+' offline assets installed',await_cache>=16)
         await_none=page.evaluate("async()=>{await caches.open('unrelated-app-sentinel');return true}")
         context.set_offline(True)
