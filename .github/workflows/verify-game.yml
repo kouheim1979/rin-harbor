@@ -1,0 +1,65 @@
+name: Verify Rin Harbor
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+    paths: ['index.html', '*.css', '*.js', 'manifest.webmanifest', 'assets/art-v1/**', 'tests/**', '.github/workflows/verify-game.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - name: Read the exact revision
+        run: |
+          git init .
+          git remote add origin "https://github.com/${{ github.repository }}.git"
+          git fetch --depth=1 origin "${{ github.sha }}"
+          git checkout --detach FETCH_HEAD
+      - name: Set up test browsers
+        run: |
+          python3 -m pip install playwright==1.57.0 Pillow==11.3.0
+          python3 -m playwright install --with-deps chromium webkit
+      - name: Check syntax and start local server
+        run: |
+          node --check game.js
+          node --check sw.js
+          python3 -m http.server 8765 > /tmp/rin-http.log 2>&1 &
+      - name: Chromium and WebKit regression tests
+        env:
+          BASE_URL: http://127.0.0.1:8765/
+          RESULT_DIR: test-results/local
+        run: python3 tests/smoke.py
+      - name: Wait for published release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          python3 - <<'PY'
+          import time, urllib.request, hashlib
+          from pathlib import Path
+          expected=hashlib.sha256(Path('game.js').read_bytes()).hexdigest()
+          for attempt in range(90):
+              try:
+                  req=urllib.request.Request('https://kouheim1979.github.io/rin-harbor/game.js?verification='+str(time.time()),headers={'Cache-Control':'no-cache'})
+                  with urllib.request.urlopen(req,timeout=20) as response: actual=response.read()
+                  if hashlib.sha256(actual).hexdigest()==expected:
+                      print('Published JavaScript matches this release byte-for-byte.');break
+              except Exception: pass
+              time.sleep(5)
+          else: raise RuntimeError('Pages did not publish the expected release in time')
+          PY
+      - name: Test the actual public app, including offline reload
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          BASE_URL: https://kouheim1979.github.io/rin-harbor/
+          RESULT_DIR: test-results/published
+        run: python3 tests/smoke.py
+      - name: Retain screenshots and test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rin-harbor-browser-results
+          path: test-results/
+          retention-days: 14

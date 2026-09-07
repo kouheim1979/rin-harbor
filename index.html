@@ -2,38 +2,39 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="format-detection" content="telephone=no">
 <meta name="theme-color" content="#071622">
 <title>リンハーバー</title>
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
-<link rel="icon" type="image/png" sizes="512x512" href="assets/icon-512.png">
+<link rel="apple-touch-icon" href="assets/art-v1/icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="assets/art-v1/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="assets/art-v1/icon-512.png">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="preload" as="image" href="assets/hero-opening.webp?v=20260906c">
-<link rel="stylesheet" href="base.css?v=20260906c">
-<link rel="stylesheet" href="premium.css?v=20260906c">
+<link rel="preload" as="image" href="assets/art-v1/hero.jpg">
+<link rel="stylesheet" href="base.css?v=20260906r1">
+<link rel="stylesheet" href="premium.css?v=20260906r1">
+<link rel="stylesheet" href="art.css?v=20260906r1">
 </head>
-<body>
+<body data-view="opening">
 <div class="app">
   <section id="screenOpening" class="screen on">
     <div class="openingHero">
-      <div id="openingFallback" class="openingFallback">👧🏻🎀 ⛵</div>
-      <img id="openingImage" src="assets/hero-opening.webp?v=20260906c" alt="リンハーバーの港">
+      <div id="openingFallback" class="openingFallback"></div>
+      <img id="openingImage" src="assets/art-v1/hero.jpg" alt="リンとリン号が待つ夕暮れの港" fetchpriority="high" decoding="async">
       <div class="openingBadge">RIN HARBOR · ADVENTURE</div>
       <div class="openingCopy">
         <span class="eyebrow">A HARBOR MERGE ADVENTURE</span><b>リンハーバー</b>
-        <span class="sub">小さな港から、大きな物語へ。合成・納品・修理でリン号をよみがえらせよう。</span>
+        <span class="sub">小さな港から、大きな物語へ。リン号をよみがえらせる、あなたとリンの冒険。</span>
       </div>
       <div class="openingButtons">
-        <button id="startHome" class="primary">冒険をはじめる</button>
-        <button id="startGame" class="good">すぐ遊ぶ</button>
+        <button id="startHome" class="primary">港へ行く</button>
+        <button id="startGame" class="good">合成して遊ぶ</button>
       </div>
     </div>
     <div class="card">
-      <div class="sub">回復待ちなし・広告なし・外部通信なし。前のセーブデータも自動で引き継ぎます。</div>
+      <div class="sub">リンといっしょに、もう一度この船を海へ。</div>
     </div>
   </section>
 
@@ -56,7 +57,15 @@
         </div>
       </div>
       <div id="statsHome" class="stats"></div>
+      <div class="harborGuide"><img src="assets/art-v1/icon-180.png" alt="リン" width="48" height="48"><div><small>RIN</small><p id="homeGuide">いっしょに船を直そう！</p></div><button data-go="game" class="primary">合成して遊ぶ</button></div>
     </header>
+    <div class="homeGrid">
+      <button class="menuCard" data-go="game"><span class="menuIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><path d="M17 14v6M14 17h6"/></svg></span><b>合成ゲーム</b><span class="tiny">ヒント・やり直し対応</span></button>
+      <button class="menuCard" data-go="orders"><span class="menuIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 15h16l-2 4H6l-2-4Z"/><path d="M7 15V9h6v6M13 9V5h4v10"/><path d="M2.5 20.5c1.2.7 2.4.7 3.6 0 1.2.7 2.4.7 3.6 0 1.2.7 2.4.7 3.6 0 1.2.7 2.4.7 3.6 0 1.2.7 2.4.7 3.6 0"/></svg></span><b id="homeOrderTitle">注文</b><span id="homeOrderSub" class="tiny">8件あります</span></button>
+      <button class="menuCard" data-go="story"><span class="menuIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H12v16H6.5A2.5 2.5 0 0 0 4 21.5v-16Z"/><path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H12v16h5.5A2.5 2.5 0 0 1 20 21.5v-16Z"/></svg></span><b>物語と修理</b><span class="tiny">港とリン号を成長</span></button>
+      <button class="menuCard" data-go="book"><span class="menuIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4.5 6.5 12 10l7.5-3.5L12 3Z"/><path d="M6 9v5c0 2.2 2.7 4 6 4s6-1.8 6-4V9"/><path d="M20 8v6"/></svg></span><b>リン図鑑</b><span id="homeBookSub" class="tiny">発見を集めよう</span></button>
+    </div>
+
 
     <div class="card">
       <div class="top">
@@ -66,12 +75,7 @@
       <div id="dailyList" class="dailyList"></div>
     </div>
 
-    <div class="homeGrid">
-      <button class="menuCard" data-go="game"><span class="menuIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><path d="M17 14v6M14 17h6"/></svg></span><b>合成ゲーム</b><span class="tiny">ヒント・やり直し対応</span></button>
-      <button class="menuCard" data-go="orders"><span class="menuIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 15h16l-2 4H6l-2-4Z"/><path d="M7 15V9h6v6M13 9V5h4v10"/><path d="M2.5 20.5c1.2.7 2.4.7 3.6 0 1.2.7 2.4.7 3.6 0 1.2.7 2.4.7 3.6 0 1.2.7 2.4.7 3.6 0 1.2.7 2.4.7 3.6 0"/></svg></span><b id="homeOrderTitle">注文</b><span id="homeOrderSub" class="tiny">8件あります</span></button>
-      <button class="menuCard" data-go="story"><span class="menuIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H12v16H6.5A2.5 2.5 0 0 0 4 21.5v-16Z"/><path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H12v16h5.5A2.5 2.5 0 0 1 20 21.5v-16Z"/></svg></span><b>物語と修理</b><span class="tiny">港とリン号を成長</span></button>
-      <button class="menuCard" data-go="book"><span class="menuIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4.5 6.5 12 10l7.5-3.5L12 3Z"/><path d="M6 9v5c0 2.2 2.7 4 6 4s6-1.8 6-4V9"/><path d="M20 8v6"/></svg></span><b>リン図鑑</b><span id="homeBookSub" class="tiny">発見を集めよう</span></button>
-    </div>
+
   </section>
 
   <section id="screenGame" class="screen game">
@@ -83,7 +87,7 @@
         </div>
         <div id="miniStats" class="miniStats"></div>
       </header>
-      <div class="boardBox"><div id="board" class="board"></div></div>
+      <div class="boardBox"><div id="board" class="board" role="group" aria-label="合成ボード・6行6列"></div></div>
       <div class="orderStrip">
         <div>
           <b id="nextOrderTitle">注文チェック中</b>
@@ -100,7 +104,7 @@
         <button id="sell" class="danger" disabled>🪙 売る</button>
         <button id="clear">解除</button>
       </div>
-      <div id="msg" class="msg">屋台をタップすると材料がずっと出るよ。</div>
+      <div id="msg" class="msg" role="status" aria-live="polite">屋台をタップすると材料がずっと出るよ。</div>
     </div>
   </section>
 
@@ -108,7 +112,7 @@
     <header class="card">
       <div class="top">
         <div><span class="eyebrow">HARBOR REQUESTS</span><div class="title">注文</div><div class="sub">そろった注文から納品できます</div></div>
-        <button id="quickOrders" class="primary">まとめて確認</button>
+        <button id="quickOrders" class="primary">納品を確認</button>
       </div>
       <div id="statsOrders" class="stats"></div>
     </header>
@@ -149,7 +153,7 @@
       <div id="bookChains" class="bookChains"></div>
     </div>
     <div class="card">
-      <h2>設定・データ</h2>
+      <h2>設定・データ</h2><p id="storageStatus" class="tiny">この端末に自動保存しています。</p><p id="offlineStatus" class="tiny">オフラインの準備中…</p><button id="downloadSave">バックアップをファイルに保存</button><p class="tiny">バージョン 2026.09.06-r1</p>
       <div class="settings">
         <div class="setting"><div><b>自動納品</b><small>完成した注文を自動で届けます</small></div><button id="autoSetting" class="toggle"></button></div>
         <div class="setting"><div><b>物語を自動進行</b><small>星が足りたら次の話を開放します</small></div><button id="autoStorySetting" class="toggle"></button></div>
@@ -170,9 +174,9 @@
   <button data-go="story"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H12v16H6.5A2.5 2.5 0 0 0 4 21.5v-16Z"/><path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H12v16h5.5A2.5 2.5 0 0 1 20 21.5v-16Z"/></svg></span>物語</button>
   <button data-go="book"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4.5 6.5 12 10l7.5-3.5L12 3Z"/><path d="M6 9v5c0 2.2 2.7 4 6 4s6-1.8 6-4V9"/><path d="M20 8v6"/></svg></span>図鑑</button>
 </nav>
-<div id="toast" class="toast"></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
 <div id="celebrate" class="celebrate"></div>
-<div id="viewer" class="viewer">
+<div id="viewer" class="viewer" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="viewerTitle">
   <div class="viewerPanel">
     <div class="viewerHead"><b id="viewerTitle">修理アルバム</b><button id="viewerClose" class="off">閉じる</button></div>
     <img id="viewerImg" class="viewerImg" alt="">
@@ -181,9 +185,7 @@
   </div>
 </div>
 
-<script src="game-data.js?v=20260906c"></script>
-<script src="game-engine-a.js?v=20260906c"></script>
-<script src="game-engine-b.js?v=20260906c"></script>
-<script src="game-engine-c.js?v=20260906c"></script>
+<script src="game.js?v=20260906r1"></script>
+<noscript>遊ぶにはJavaScriptを有効にしてください。</noscript>
 </body>
 </html>

@@ -1,1 +1,26 @@
-{"name":"リンハーバー DX","short_name":"リンハーバー","description":"リンちゃん専用の港合成アドベンチャー。合成・注文・リン号修理・デイリーミッション・図鑑をオフラインで楽しめます。","start_url":"./index.html","scope":"./","display":"standalone","background_color":"#071622","theme_color":"#071622","icons":[{"src":"assets/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},{"src":"assets/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"},{"src":"assets/icon.png","sizes":"512x512","type":"image/png","purpose":"any"},{"src":"apple-touch-icon.png","sizes":"180x180","type":"image/png","purpose":"any"}]}
+{
+  "id": "./",
+  "name": "リンハーバー",
+  "short_name": "リンハーバー",
+  "description": "リンといっしょに、小さな港と大切な船を育てる合成ゲーム。",
+  "lang": "ja",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b2030",
+  "theme_color": "#0b2030",
+  "icons": [
+    {
+      "src": "assets/art-v1/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/art-v1/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

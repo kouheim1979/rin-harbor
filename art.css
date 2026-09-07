@@ -1,0 +1,88 @@
+/* Illustration release: preserve readable gameplay and let the artwork lead. */
+:root{--nav-h:72px;--coral:#ee7693;--cream:#faecd2}
+html,body{height:100%;min-width:280px}
+body{background:#0b2030}
+body::before,body::after{display:none}
+button{cursor:pointer;touch-action:manipulation}
+button:focus-visible{outline:3px solid #f9cf78;outline-offset:3px}
+button:disabled{cursor:default}
+button svg{pointer-events:none}
+[hidden]{display:none!important}
+.app{height:100vh;height:100dvh;max-width:900px;padding:calc(8px + env(safe-area-inset-top,0px)) 10px calc(87px + env(safe-area-inset-bottom,0px))}
+.screen{padding-top:0}
+body[data-view="opening"] .app{padding:0;max-width:1100px}
+#screenOpening{position:relative;height:100%;overflow:hidden}
+#screenOpening>.card{position:absolute;left:0;right:0;bottom:calc(7px + env(safe-area-inset-bottom,0px));z-index:6;margin:0;padding:0 10px}
+#screenOpening>.card .sub{color:#a4bdc7;font-size:10px;letter-spacing:.06em}
+.openingHero{height:100%!important;min-height:0!important;border:0;border-radius:0;isolation:isolate;background:#132c3d}
+.openingHero>img{width:100%;height:100%;object-fit:cover;object-position:16% center;filter:none;transform:none}
+.openingHero::before{background:linear-gradient(180deg,rgba(5,20,32,.13) 0%,transparent 34%,rgba(5,20,32,.1) 50%,rgba(5,20,32,.86) 79%,#081b2a 100%);z-index:2}
+.openingBadge{top:calc(22px + env(safe-area-inset-top,0px));left:24px;font-size:9px;border-color:#d8c8ac70;background:#142e3ca3;color:#ffedc9;letter-spacing:.19em}
+.openingCopy{left:24px;right:24px;bottom:calc(131px + env(safe-area-inset-bottom,0px));max-width:620px}
+.openingCopy .eyebrow{color:#efcb8e;letter-spacing:.2em;font-size:10px;margin-bottom:11px}
+.openingCopy b{font-size:clamp(40px,10.5vw,70px);line-height:1.12;font-weight:900;letter-spacing:.015em;color:#fff8e8;text-shadow:0 4px 18px #061724}
+.openingCopy .sub{font-size:13px;line-height:1.7;color:#d3e2e8;max-width:450px;margin-top:13px}
+.openingButtons{left:24px;right:24px;bottom:calc(47px + env(safe-area-inset-bottom,0px));gap:10px;grid-template-columns:1fr 1.1fr}
+.openingButtons button{height:56px;min-height:0;font-size:15px;border-radius:14px}
+.openingButtons #startGame{background:linear-gradient(#edbb71,#c98646);color:#241b16;border-color:#ffe1a3;box-shadow:0 5px 0 #80522f,0 12px 30px #040b16a0}
+.openingButtons #startHome{background:#142e40d9;color:#fff1d7;border-color:#d2b28580;box-shadow:0 5px 0 #071521,0 12px 24px #040b1660}
+.openingFallback{display:grid;place-items:center;font-size:14px;padding:30px;line-height:1.7;color:#f4dec0;text-align:center}
+.openingFallback::before{display:none}
+#screenHome>header.card{border-radius:22px;box-shadow:0 12px 40px #020c1980}
+#screenHome>header.card>.top{padding:17px 18px;background:linear-gradient(#091a2ecc,transparent);pointer-events:none}
+#screenHome>header.card>.top .title{font-size:24px;letter-spacing:.01em;text-shadow:0 3px 10px #051b2d}
+#screenHome>header.card>.top .eyebrow{font-size:8px;color:#f4d8ac}
+#screenHome>header.card>.top .sub{display:none}
+.harborHero{height:auto;min-height:0!important;aspect-ratio:4/3;border-radius:0;isolation:isolate}
+.harborHeroImg{filter:none;transform:none;object-position:center center;z-index:1}
+.harborHero::before{background:linear-gradient(180deg,transparent 50%,rgba(4,19,30,.75) 100%);z-index:2}
+.harborFallback{background:#103448;font-size:13px;text-align:center;padding:20px;z-index:0;color:#b7d5df}
+.harborFallback::before{display:none}
+.harborOverlay{left:12px;right:12px;bottom:10px;padding:10px 12px;background:#091f30db;border:1px solid #aecdd533;border-radius:14px;gap:10px}
+.harborOverlay b{font-size:14px}.harborOverlay .tiny{font-size:10px;margin:4px 0 6px}
+.harborOverlay button{min-height:42px;min-width:78px;font-size:13px;color:#172725;background:linear-gradient(#96dbb0,#5fae91);box-shadow:0 3px 0 #306351}
+.progress,.progress>i{border-radius:6px}
+#statsHome{padding:10px 12px 5px}.stat b{font-variant-numeric:tabular-nums;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.harborGuide{display:flex;align-items:center;gap:10px;padding:12px;background:#091e2d}
+.harborGuide img{border-radius:50%;border:2px solid #e4c799;flex:0 0 43px;width:43px;height:43px;object-fit:cover}
+.harborGuide>div{min-width:0;flex:1}.harborGuide small{color:#edc58b;font-size:9px;letter-spacing:.18em}.harborGuide p{margin:3px 0 0;font-size:11px;line-height:1.5;color:#c4d6de}
+.harborGuide button{min-height:44px;min-width:107px;padding:8px 10px;font-size:12px;flex:none}
+.homeGrid{margin-bottom:11px;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.menuCard{min-height:95px!important;align-items:center;text-align:center;padding:11px 5px!important;gap:7px;background:#102b3c;border:1px solid #b8d6df20}
+.menuCard .tiny{display:none}.menuCard b{font-size:10px!important}.menuIcon{width:31px;height:31px;border:0;background:transparent}.menuCard::before{display:none}
+.card .top{align-items:center}.card h2{font-size:16px}.streak{font-size:10px;white-space:nowrap}
+.mission.ready{border-color:#d2b56b80;background:linear-gradient(120deg,#163b3b,#163144)}.mission.ready .progress>i{background:#e4c07b}
+.missionFoot button{min-height:38px;font-size:12px}
+.gamePage{grid-template-rows:auto minmax(0,1fr) auto auto auto;gap:7px;min-height:0}
+.gameHead{padding:8px 10px}.gameHeadRow{min-height:36px}.gameHead .eyebrow{font-size:8px;margin-bottom:2px}.gameTitle{font-size:17px}.gameHeadRow>button{min-height:38px;min-width:40px;padding:5px}
+.miniStats{flex-wrap:nowrap;gap:4px;overflow:hidden}.miniStats span{font-size:11px;padding:3px 6px;white-space:nowrap;font-variant-numeric:tabular-nums}.miniStats span:nth-child(4){display:none}
+.boardBox{min-width:0;min-height:0;align-items:center;justify-content:center}.boardBox::before{display:none}
+.board{flex-shrink:0;width:280px;height:280px;max-width:100%;padding:7px;border:1px solid #a7c6ce40;border-radius:20px;background:linear-gradient(140deg,#173848,#082132);box-shadow:inset 0 1px 0 #f7e2b125,0 10px 26px #020b1680;gap:5px}
+.cell{min-width:0;min-height:0;border-radius:11px;border-color:#9ac2ce30;background:linear-gradient(155deg,#315364,#173444);box-shadow:inset 0 1px 0 #d8eced22,inset 0 -3px 0 #061c2a55}
+.cell.empty{background:#071e2c75;border:1px dashed #c1d8dc12;box-shadow:none}.cell.gen{background:linear-gradient(135deg,#63563c,#303f3b);border-color:#e7c68b70}
+.em{font-size:var(--piece-size,28px);line-height:1.15;filter:drop-shadow(0 3px 3px #0006)}.nm{display:none}.lv,.tap{font-size:8px;padding:1px 3px;top:2px}.lv{color:#d3e0e3}.tap{color:#ffe2a4}
+.cell.sel{border-color:#f6cd89;box-shadow:inset 0 0 0 1px #e8cb91,0 0 16px #f9c76d44}.cell.dropTarget{border-color:#a8ecc6;background:#315d54}
+.orderStrip{padding:9px 11px;grid-template-columns:minmax(0,1fr) 78px;gap:7px}.orderStrip b{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.orderStrip small{font-size:10px;margin-top:3px}.orderStrip>button{min-height:44px;font-size:12px;padding:6px}
+.wantMini{gap:4px;max-height:56px;overflow:auto}.wantMini span{font-size:10px;padding:3px 5px;white-space:nowrap}.wantMini .ok{border-color:#94dcab70;background:#224937;color:#c8f7cf}
+.controls{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));padding:7px;gap:4px;overflow:visible}
+.controls button{white-space:nowrap;font-size:10px;padding:8px 0;min-width:0;min-height:39px;border-radius:9px}.controls #undo{overflow:hidden;text-overflow:ellipsis}
+.msg{height:34px;min-height:34px;line-height:1.35;display:flex;align-items:center;font-size:10px;padding:5px 9px;overflow:hidden;color:#a8c5d0}
+.order.ready{border-color:#cbab6c90;box-shadow:inset 3px 0 #e9c784;background:linear-gradient(130deg,#214439,#123140)}
+.order .ot{font-size:13px;flex-wrap:wrap}.order .ot>span:last-child{color:#f4d48e;white-space:nowrap}.want{font-size:12px;gap:10px}.order button{min-height:44px}
+.bookName{font-size:10px;white-space:normal;overflow:visible;line-height:1.4}.bookItem{min-width:0;padding:6px 3px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:3px}.setting small{font-size:11px}.setting b{font-size:13px}.setting button{min-height:42px;font-size:12px}
+.nav{left:10px;right:10px;bottom:calc(8px + env(safe-area-inset-bottom,0px));height:70px;padding:5px;max-width:860px;border-radius:18px;background:#061b2afa;border-color:#d0dfdd24}
+.nav button{min-height:56px;font-size:10px}.nav button.active{color:#fff0cf;background:#263d49}.nav button.active .navIcon{color:#eed19a}
+.toast{max-width:min(92vw,500px);font-size:12px;padding:11px 15px;bottom:calc(95px + env(safe-area-inset-bottom,0px));z-index:350}
+.confetti{color:#f4cc8a;font-size:22px;text-shadow:0 0 6px #ffd87f}
+.viewer{padding:calc(12px + env(safe-area-inset-top,0px)) 12px calc(12px + env(safe-area-inset-bottom,0px))}
+.viewerPanel{max-height:100%;max-width:850px;padding:12px;overflow:auto;background:#0b2433;border:1px solid #ecd3a73d;border-radius:20px}
+.viewerHead{position:sticky;top:-12px;z-index:3;background:#0b2433;padding:7px 0;min-height:48px}.viewerHead b{font-size:15px;color:#ffe4ba}.viewerHead button{min-height:42px}
+.viewerImg{aspect-ratio:4/3;object-fit:contain;background:#071723;border-radius:12px;max-height:62vh;width:100%}
+.viewerText{font-size:13px;line-height:1.65}.viewerThumbs{grid-template-columns:repeat(3,1fr)}.viewerThumb{min-width:0;font-size:10px}.viewerThumb img{object-fit:cover}.viewerThumb div{font-size:10px}
+#downloadSave{min-height:44px;font-size:12px;margin:4px 0 8px}
+.merge-hit{animation:mergeHit .35s ease-out}
+@keyframes mergeHit{0%{transform:scale(.7);filter:brightness(1.6)}55%{transform:scale(1.1)}100%{transform:scale(1);filter:brightness(1)}}
+@media(min-width:700px){.openingHero>img{object-position:center center}.openingCopy{left:42px;bottom:155px}.openingButtons{left:42px;right:auto;width:470px;bottom:65px}.openingBadge{left:42px;top:32px}.harborHero{aspect-ratio:16/8;max-height:425px}.harborHeroImg{object-position:center 44%}.harborGuide p{font-size:13px}.harborGuide button{min-width:180px}.menuCard b{font-size:13px!important}.controls button{font-size:12px}.msg{font-size:12px}.orderStrip b{font-size:14px}}
+@media(max-height:640px){.app{padding-top:5px;padding-bottom:calc(74px + env(safe-area-inset-bottom,0px))}.nav{height:61px;padding:2px}.nav button{min-height:51px}.gamePage{gap:4px}.gameHead{padding:5px 8px}.gameHead .eyebrow{display:none}.miniStats{margin-top:3px}.gameHeadRow{min-height:28px}.gameHeadRow>button{min-height:28px;height:28px}.gameTitle{font-size:15px}.orderStrip{padding:6px 9px}.wantMini{max-height:38px}.controls{padding:4px}.controls button{min-height:34px}.msg{height:28px;min-height:28px}.openingCopy{bottom:124px}.openingCopy .eyebrow{display:none}.openingCopy b{font-size:34px}.openingCopy .sub{font-size:11px}.openingButtons button{height:46px}}
+@media(orientation:landscape) and (max-height:520px){.app{max-width:1100px}.gamePage{grid-template-columns:minmax(230px,1fr) minmax(240px,1fr);grid-template-rows:auto 1fr auto auto;gap:6px}.boardBox{grid-row:1/5;grid-column:1}.gameHead,.orderStrip,.controls,.msg{grid-column:2}.controls{grid-template-columns:repeat(3,1fr)}.gameHead{grid-row:1}.orderStrip{grid-row:2;align-self:center}.controls{grid-row:3}.msg{grid-row:4}.openingCopy{bottom:115px}.openingCopy b{font-size:35px}.openingCopy .sub{max-width:400px;margin-top:8px}.openingBadge{top:12px}.openingButtons{bottom:42px;max-width:500px}.harborHero{max-height:290px}.viewerImg{max-height:53vh}}
+@media(prefers-reduced-motion:reduce){.merge-hit,.confetti,.cell.hint{animation:none!important}*{scroll-behavior:auto!important}}
