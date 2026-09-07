@@ -1,0 +1,56 @@
+name: Build Sea Journal HD release
+on:
+  push:
+    branches: [release/sea-journal-hd-20260907]
+    paths: [.github/workflows/build-sea-journal.yml]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 1
+      - name: Install image reconstruction tools
+        run: python3 -m pip install opencv-contrib-python-headless==4.11.0.86 Pillow==11.3.0
+      - name: Integrate the age-appropriate game UI
+        run: |
+          python3 scripts/upgrade_youth.py
+          git restore .github/workflows/verify-game.yml
+      - name: Reconstruct and validate seven high-resolution illustrations
+        run: python3 scripts/build_hd.py
+      - name: Check complete application syntax
+        run: |
+          node --check game.js
+          node --check item-art.js
+          node --check sw.js
+          python3 -m py_compile tests/smoke.py tests/youth.py tests/origin_offline.py
+      - name: Commit the complete release to its branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html game.js youth.css sw.js manifest.webmanifest README.md tests/smoke.py tests/origin_offline.py assets/art-hd
+          git commit -m 'feat: Sea Journal UI and 2x reconstructed artwork, preserving player saves'
+          git push origin HEAD:${{ github.ref_name }}
+      - name: Package exact sources and artwork for verification
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import zipfile
+          from pathlib import Path
+          with zipfile.ZipFile('/tmp/sea-journal-build.zip','w',zipfile.ZIP_DEFLATED) as z:
+              for p in Path('.').rglob('*'):
+                  if p.is_file() and '.git' not in p.parts and '__pycache__' not in p.parts:
+                      z.write(p,str(p))
+          PY
+      - name: Keep reconstruction manifest and complete build
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sea-journal-hd-build
+          path: /tmp/sea-journal-build.zip
+          retention-days: 14

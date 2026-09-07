@@ -50,7 +50,7 @@ const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 
-const RELEASE='20260906-r1';
+const RELEASE='20260907-sea2';
 const BACKUP_KEY='rin_harbor_before_art_v1';
 const int=(v,lo=0,hi=1e9,fallback=0)=>Number.isFinite(Number(v))?Math.max(lo,Math.min(hi,Math.floor(Number(v)))):fallback;
 let hintTimer=null, comboTimer=null, albumIndex=0, albumReturnFocus=null, diskAvailable=true;
@@ -133,7 +133,7 @@ function undo(){
   catch(_e){undoState=null;updateUndoButton();toast('この操作は戻せませんでした。');}
 }
 
-function updateUndoButton(){const b=$('undo');if(!b)return;b.disabled=!undoState;b.textContent=undoState?'↩️ '+undoLabel:'↩️ 戻す'}
+function updateUndoButton(){const b=$('undo');if(!b)return;b.disabled=!undoState;b.textContent='戻す';b.title=undoState?undoLabel+'を戻す':'戻せる操作なし'}
 
 function localDateString(d=new Date()){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`}
 
@@ -299,23 +299,23 @@ function setView(v){
 }
 
 function statsHtml(){
-  const discovered=Object.keys(ITEMS).filter(id=>S.book[id]).length;
-  return `<div class="stat"><small>コイン</small><b>🪙${S.coins}</b></div><div class="stat"><small>星</small><b>⭐${S.stars}</b></div><div class="stat"><small>レベル</small><b>Lv${S.level}</b></div><div class="stat"><small>修理</small><b>🔧${S.repair}/5</b></div><div class="stat"><small>図鑑</small><b>${discovered}</b></div>`;
+  const found=Object.keys(ITEMS).filter(id=>S.book[id]).length;
+  return `<div class="stat"><small>コイン</small><b>${gameIcon('coin')}${S.coins}</b></div><div class="stat"><small>星</small><b>${gameIcon('star')}${S.stars}</b></div><div class="stat"><small>レベル</small><b>Lv.${S.level}</b></div><div class="stat"><small>船の修理</small><b>${S.repair}/5</b></div><div class="stat"><small>お宝</small><b>${found}/53</b></div>`;
 }
 
 function miniStatsHtml(){
-  return `<span>🪙${S.coins}</span><span>⭐${S.stars}</span><span>Lv${S.level}</span><span>🔧${S.repair}/5</span><span>${S.auto?'🤖ON':'手動'}</span>${combo>1?`<span class="combo">🔥${combo}コンボ</span>`:''}`;
+  return `<span>${gameIcon('coin')}${S.coins}</span><span>${gameIcon('star')}${S.stars}</span><span>Lv.${S.level}</span>${combo>1?`<span class="combo">${combo}コンボ!</span>`:''}`;
 }
 
 function renderHome(){
   $('statsHome').innerHTML=statsHtml();
-  $('streakBadge').textContent=`🔥 ${S.daily.streak}日`;
+  $('streakBadge').textContent=`連続 ${S.daily.streak}日`;
   const r=S.repair,cost=r<5?REPAIR_COSTS[r]:0;
   $('repairTitle').textContent=r<5?REPAIR_TITLES[r+1]:'リン号、出航の準備完了！';
   $('repairSub').textContent=r>=5?'港のみんなと、ここまで来たね。':(S.coins>=cost?`修理 ${r}/5 ・ 修理を進められるよ`:`修理 ${r}/5 ・ あと ${cost-S.coins}コイン`);
   $('repairBar').style.width=(r/5*100)+'%';
   $('repairBtn').disabled=r>=5||S.coins<cost;
-  $('repairBtn').textContent=r>=5?'🚢 完成':'🔧 '+cost;
+  $('repairBtn').textContent=r>=5?'修理完了':cost+' で修理';
   $('homeShipFallback').textContent='';
   setStageImage($('homeShipImage'),r);
   const ready=S.orders.filter(orderCan).length;
@@ -323,7 +323,7 @@ function renderHome(){
   $('homeOrderSub').textContent=ready?(S.auto?'自動納品ON':'注文画面から届けよう'):'材料を合成してそろえよう';
   const discovered=Object.keys(ITEMS).filter(id=>S.book[id]).length;
   $('homeBookSub').textContent=`${discovered}/${Object.keys(ITEMS).length} 発見`;
-  $('homeGuide').textContent=r<5?'リン号を直す材料、いっしょに集めよう！':'リン号がぴかぴか！ つぎは図鑑を完成させよう。';renderDaily();
+  $('homeGuide').textContent=r<5?'リン号を直す材料、いっしょに集めよう！':'リン号がぴかぴか！ つぎは図鑑を完成させよう。';renderDaily();$('repairJourney').innerHTML=Array.from({length:5},(_,i)=>`<span class="${i<S.repair?'complete':i===S.repair?'current':''}">${i<S.repair?'✓':i+1}</span>`).join('');
 }
 
 function renderDaily(){
@@ -332,7 +332,7 @@ function renderDaily(){
   S.daily.missions.forEach((m,i)=>{
     const done=m.progress>=m.goal,pct=Math.min(100,m.progress/m.goal*100);
     const el=document.createElement('div');el.className='mission'+(done?' ready':'');
-    el.innerHTML=`<div class="missionRow"><div class="missionTitle">${m.icon} ${esc(m.title)}</div><div class="missionReward">🪙${m.rewardCoin} ⭐${m.rewardStar}</div></div>
+    el.innerHTML=`<div class="missionRow"><div class="missionTitle">${gameIcon({generate:'ship',merge:'grid',deliver:'check'}[m.type])} ${esc(m.title)}</div><div class="missionReward">🪙${m.rewardCoin} ⭐${m.rewardStar}</div></div>
       <div class="progress"><i style="width:${pct}%"></i></div>
       <div class="missionFoot"><span>${m.progress}/${m.goal}</span>${m.claimed?'<span>✅ 受取済み</span>':done?`<button class="primary" data-claim="${i}">🎁 受け取る</button>`:'<span>進行中</span>'}</div>`;
     list.appendChild(el);
@@ -342,14 +342,14 @@ function renderDaily(){
 
 function renderGame(){
   ensureOrders();const focused=document.activeElement?.closest?.('.cell')?.dataset.i;
-  $('miniStats').innerHTML=miniStatsHtml();
+  $('miniStats').innerHTML=miniStatsHtml();$('gameXp').style.width=Math.min(100,S.xp/xpThreshold()*100)+'%';
   $('board').innerHTML=S.board.map((id,i)=>{
     const cls=['cell',!id?'empty':'',id&&isGen(id)?'gen':'',selected===i?'sel':'',hintPair.includes(i)?'hint':''].filter(Boolean).join(' ');
-    return `<button class="${cls}" data-i="${i}" aria-label="${id?esc(nameOf(id))+' レベル'+levelOf(id):'空きマス '+(i+1)}">${id?`<div class="em">${emojiOf(id)}</div><div class="nm">${esc(nameOf(id))}</div>${isGen(id)?'<div class="tap">TAP</div>':`<div class="lv">Lv${levelOf(id)}</div>`}`:''}</button>`;
+    return `<button class="${cls}" data-i="${i}" aria-label="${id?esc(nameOf(id))+' レベル'+levelOf(id):'空きマス '+(i+1)}">${id?`<div class="em">${itemArt(id)}</div><div class="nm">${esc(nameOf(id))}</div>${isGen(id)?'<div class="tap">材料</div>':`<div class="lv">Lv${levelOf(id)}</div>`}`:''}</button>`;
   }).join('');
   renderNextOrder();
   $('sell').disabled=selected===null||!S.board[selected]||isGen(S.board[selected]);
-  $('autoGame').textContent=S.auto?'🤖 ON':'🤖 OFF';$('autoGame').className=S.auto?'good':'off';
+  $('autoGame').textContent=S.auto?'自動 ON':'自動 OFF';$('autoGame').className=S.auto?'good':'off';
   updateUndoButton();if(focused!==undefined)$('board').querySelector(`[data-i="${focused}"]`)?.focus({preventScroll:true});requestAnimationFrame(fitBoard);
 }
 
@@ -360,26 +360,26 @@ function renderNextOrder(){
   $('quickTop').disabled=f<0;
   $('nextOrderTitle').textContent=f>=0?'お届けの準備ができたよ':o?.title||'港の注文';
   $('nextOrderSub').textContent=o?`報酬：${o.coin}コイン ＋ 星${o.star}`:'材料を合成しよう';
-  $('nextWants').innerHTML=o?o.wants.map(w=>`<span class="${(c[w.id]||0)>=w.n?'ok':''}">${emojiOf(w.id)} ${esc(nameOf(w.id))} ${c[w.id]||0}/${w.n}</span>`).join(''):'';
+  $('nextWants').innerHTML=o?o.wants.map(w=>`<span class="${(c[w.id]||0)>=w.n?'ok':''}">${itemArt(w.id)} ${esc(nameOf(w.id))} ${c[w.id]||0}/${w.n}</span>`).join(''):'';
 }
 
 function renderOrders(){
   $('statsOrders').innerHTML=statsHtml();
   const c=countBoard();
-  $('orders').innerHTML=S.orders.map((o,i)=>`<div class="order ${orderCan(o)?'ready':''}"><div class="ot"><span>${esc(o.title)}</span><span>🪙${o.coin} ⭐${o.star}</span></div>${o.wants.map(w=>`<div class="want ${(c[w.id]||0)>=w.n?'ok':'ng'}"><span>${emojiOf(w.id)} ${esc(nameOf(w.id))}</span><span>${c[w.id]||0}/${w.n}</span></div>`).join('')}<button class="${orderCan(o)?'primary':''}" data-order="${i}" ${orderCan(o)?'':'disabled'}>${orderCan(o)?'🚢 納品する':'まだ足りない'}</button></div>`).join('');
+  $('orders').innerHTML=S.orders.map((o,i)=>`<div class="order ${orderCan(o)?'ready':''}"><div class="ot"><span>${esc(o.title)}</span><span>🪙${o.coin} ⭐${o.star}</span></div>${o.wants.map(w=>`<div class="want ${(c[w.id]||0)>=w.n?'ok':'ng'}"><span>${itemArt(w.id)} ${esc(nameOf(w.id))}</span><span>${c[w.id]||0}/${w.n}</span></div>`).join('')}<button class="${orderCan(o)?'primary':''}" data-order="${i}" ${orderCan(o)?'':'disabled'}>${orderCan(o)?'🚢 納品する':'まだ足りない'}</button></div>`).join('');
 }
 
 function renderStory(){
   $('statsStory').innerHTML=statsHtml();
   $('storyList').innerHTML=STORIES.map((s,i)=>{
     const open=i<=S.story,canOpen=i===S.story+1&&S.stars>=s.cost;
-    return `<div class="storyCard ${open?'':'locked'}"><div class="ot"><span>${open?'📖':'🔒'} ${esc(s.t)}</span><span>⭐${s.cost}</span></div><div>${open?esc(s.x):'まだ開放されていません。'}</div><div class="storyMeta">${s.coins?`<span class="pill">報酬 🪙${s.coins}</span>`:''}${s.item?'<span class="pill">新しい屋台 🏵️</span>':''}</div>${canOpen?`<button class="primary" data-story="${i}">⭐ ${s.cost}で開放</button>`:''}</div>`;
+    return `<div class="storyCard ${open?'':'locked'}"><div class="ot"><span>${open?'●':'○'} ${esc(s.t)}</span><span>⭐${s.cost}</span></div><div>${open?esc(s.x):'まだ開放されていません。'}</div><div class="storyMeta">${s.coins?`<span class="pill">報酬 🪙${s.coins}</span>`:''}${s.item?'<span class="pill">新しい屋台 🏵️</span>':''}</div>${canOpen?`<button class="primary" data-story="${i}">⭐ ${s.cost}で開放</button>`:''}</div>`;
   }).join('');
   renderAlbumStrip();
 }
 
 function renderAlbumStrip(){
-  $('albumStrip').innerHTML=ALBUM.slice(0,S.repair+1).map((a,i)=>`<button class="albumThumb" data-album="${i}" aria-label="${esc(a.title)}を大きく見る"><img loading="lazy" decoding="async" src="${bestStagePath(i)}" alt="${esc(a.title)}"><span>${esc(a.title)}</span></button>`).join('');
+  $('albumStrip').innerHTML=ALBUM.slice(0,S.repair+1).map((a,i)=>`<button class="albumThumb" data-album="${i}" aria-label="${esc(a.title)}を大きく見る"><img loading="lazy" decoding="async" src="assets/art-hd/thumb-${i}.webp" alt="${esc(a.title)}"><span>${esc(a.title)}</span></button>`).join('');
 }
 
 function renderBook(){
@@ -390,7 +390,7 @@ function renderBook(){
   for(const [kind,data] of Object.entries(CHAIN_DATA)){
     const ids=Array.from({length:MAX_ITEM_LEVEL},(_,i)=>kind+(i+1));
     const found=ids.filter(id=>S.book[id]).length;
-    blocks.push(`<div class="chain"><div class="chainHead"><span>${data.icon} ${esc(data.label)}</span><span>${found}/10</span></div><div class="chainGrid">${ids.map(id=>{const open=!!S.book[id];return `<div class="bookItem ${open?'':'locked'}"><div class="bookEmoji">${open?emojiOf(id):'❓'}</div><div class="bookName">${open?esc(nameOf(id)):'???'}</div><div class="bookLv">Lv${levelOf(id)}</div></div>`}).join('')}</div></div>`);
+    blocks.push(`<div class="chain"><div class="chainHead"><span>${gameIcon({drink:'ship',dessert:'star',shell:'gem',fish:'anchor',toy:'compass'}[kind])} ${esc(data.label)}</span><span>${found}/10</span></div><div class="chainGrid">${ids.map(id=>{const open=!!S.book[id];return `<div class="bookItem ${open?'':'locked'}"><div class="bookEmoji">${open?itemArt(id):gameIcon('lock')}</div><div class="bookName">${open?esc(nameOf(id)):'???'}</div><div class="bookLv">Lv${levelOf(id)}</div></div>`}).join('')}</div></div>`);
   }
   $('bookChains').innerHTML=blocks.join('');
   setToggle($('autoSetting'),S.auto,'ON','OFF');
@@ -419,7 +419,7 @@ function sound(type){
   try{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume().catch(()=>{});const map={pop:[420,.05],merge:[620,.08],deliver:[760,.12],reward:[880,.12],level:[980,.15],story:[700,.14],repair:[520,.14],sell:[330,.06]};const [freq,dur]=map[type]||[500,.06];const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='sine';o.frequency.value=freq;g.gain.setValueAtTime(.0001,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.08,audioCtx.currentTime+.01);g.gain.exponentialRampToValueAtTime(.0001,audioCtx.currentTime+dur);o.connect(g).connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+dur+.02)}catch(_e){}
 }
 
-function bestStagePath(stage){return `assets/art-v1/repair-${int(stage,0,5)}.jpg`}
+function bestStagePath(stage){return `assets/art-hd/repair-${int(stage,0,5)}.webp`}
 
 function setStageImage(img,stage){
   const path=bestStagePath(stage);if(img.dataset.src===path&&img.complete&&img.naturalWidth>0)return;
@@ -434,7 +434,7 @@ function openAlbum(index=0){
   if(!viewer.classList.contains('on'))albumReturnFocus=document.activeElement;
   $('viewerTitle').textContent=item.title;$('viewerText').textContent=item.text;
   const img=$('viewerImg');img.style.display='block';img.alt=item.title;img.onload=()=>img.style.display='block';img.onerror=()=>{$('viewerText').textContent='画像を読み込めませんでした。閉じて、もう一度開いてください。';img.style.display='none'};img.src=bestStagePath(albumIndex);
-  $('viewerThumbs').innerHTML=ALBUM.slice(0,S.repair+1).map((it,i)=>`<button class="viewerThumb ${i===albumIndex?'primary':''}" data-view-stage="${i}" aria-label="${esc(it.title)}"><img loading="lazy" src="${bestStagePath(i)}" alt=""><div>${esc(it.title)}</div></button>`).join('');
+  $('viewerThumbs').innerHTML=ALBUM.slice(0,S.repair+1).map((it,i)=>`<button class="viewerThumb ${i===albumIndex?'primary':''}" data-view-stage="${i}" aria-label="${esc(it.title)}"><img loading="lazy" src="assets/art-hd/thumb-${i}.webp" alt=""><div>${esc(it.title)}</div></button>`).join('');
   viewer.classList.add('on');viewer.setAttribute('aria-hidden','false');document.querySelector('.app').inert=true;$('nav').inert=true;$('viewerClose').focus({preventScroll:true});
 }
 
@@ -506,7 +506,7 @@ $('board').addEventListener('pointermove',e=>{
   if(!drag||drag.pointerId!==e.pointerId)return;e.preventDefault();
   const id=S.board[drag.from];
   if(!drag.active&&id&&!isGen(id)&&Math.hypot(e.clientX-drag.x,e.clientY-drag.y)>9){
-    drag.active=true;drag.ghost=document.createElement('div');drag.ghost.className='dragGhost';drag.ghost.textContent=emojiOf(id);document.body.append(drag.ghost);
+    drag.active=true;drag.ghost=document.createElement('div');drag.ghost.className='dragGhost';drag.ghost.innerHTML=itemArt(id);document.body.append(drag.ghost);
   }
   if(drag.active){drag.target=targetFromPoint(e.clientX,e.clientY);drag.ghost.style.transform=`translate(${e.clientX-29}px,${e.clientY-29}px)`;markDrag()}
 },{passive:false});

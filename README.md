@@ -1,39 +1,27 @@
-# リンハーバー
+# リンハーバー — Sea Journal
 
-リンと港を育てる合成パズル。生成したオリジナルイラスト7枚をアプリに組み込み、修理の進行に合わせて別の絵が表示されます。
+小学高学年向けの、海の冒険と合成を楽しむゲームです。
 
-## 遊ぶ
-https://kouheim1979.github.io/rin-harbor/
+## 今回の更新
+- アイボリー・海のグリーンを使った画面に刷新。暗いパネルや英語中心の見出しを廃止。
+- 港、次の修理目標、遊ぶボタンを中心に整理。ゲーム盤面はスマホの実寸に合わせます。
+- 53アイテムはブラウザ内のオリジナルSVGイラスト。表示倍率によるぼやけがありません。
+- タイトルと修理イラストは、元の1440px画像をFSRCNNで縦横2倍に再構成。タイトル2880×1620、修理6枚2880×2160。新規に描いたネイティブ4K画像ではありません。
+- 拡大アルバムは高解像度版、一覧は480×360の軽量サムネイルを使用。
+- 全画像、ゲーム、操作、バックアップ復元、オフライン再起動をGitHub Actionsで検証します。
 
-カフェやかごをタップして材料を出し、同じものを2つ重ねて合成します。注文を届けてコインと星を集め、船を修理し、港の物語を進めます。修理の場面はアルバムで振り返れます。
+## データ
+保存キー `rin_harbor_save_v10` は変更しません。旧セーブは引き継ぎ、移行前の控えも残します。UI更新でプレイヤーデータを初期化しません。
 
-## 機能
-- 6×6盤面、5系統×10段階、8件の注文、5段階の修理、8話の港の物語
-- タップ・ドラッグ・キーボード操作、ヒント、整列、1手取り消し
-- 自動納品と物語の自動進行を個別に設定
-- 日替わりミッション、コンボ、任意の効果音
-- 旧v5〜v10セーブ引き継ぎ、移行前データ保存、JSON/コードのバックアップと復元
-- 初回のオフライン保存完了後は、画像も含めて通信なしで起動可能
+## 構成
+`index.html` / `youth.css` / `item-art.js` / `game.js` / `sw.js` / `assets/art-hd/`。以前の素材も履歴と互換性のため残しています。
 
-## ファイル
-- `index.html`：画面構成
-- `game.js`：データとゲーム処理、入力・保存処理
-- `base.css` / `premium.css` / `art.css`：共通・ゲームUI・イラスト版のレイアウト
-- `assets/art-v1/`：イラスト7枚、アイコン3サイズ、検証用ハッシュ一覧
-- `sw.js` / `manifest.webmanifest`：PWA設定とオフライン保存
-- `tests/smoke.py`：Chromium / WebKitのブラウザ回帰テスト
+## 画像処理
+OpenCV dnn_superres の FSRCNN x2 を使用。モデルの出典とSHA-256、各出力画像の寸法・バイト数・SHA-256は `assets/art-hd/manifest.json` に記録しています。
+モデル: https://github.com/Saafke/FSRCNN_Tensorflow （Apache-2.0）
+OpenCV: https://docs.opencv.org/4.x/d5/d29/tutorial_dnn_superres_upscale_image_single.html
 
-## 保存について
-プレイデータは同じブラウザ・同じ公開サイトのlocalStorageに保存します。更新による初期化はしません。ブラウザデータを消すと進行も消えるため、図鑑の設定からバックアップを保存してください。端末間の自動同期はありません。保存できないブラウザ設定では警告を表示します。
-
-## 開発時の確認
-```sh
-python3 -m pip install playwright==1.57.0 Pillow==11.3.0
-python3 -m playwright install --with-deps chromium webkit
-python3 -m http.server 8765
-# 別のターミナルで
-BASE_URL=http://127.0.0.1:8765/ python3 tests/smoke.py
-```
-GitHub Actionsでも同じテストを実行し、main更新時はGitHub Pagesの公開版をさらに検証します。結果とスクリーンショットはActionsのアーティファクトから確認できます。
-
-2026.09.06-r1
+## 検証
+`python tests/smoke.py` と `python tests/youth.py`。
+Playwright Chromium / WebKit の自動テストです。iPhone実機のテストではありません。
+公開先: https://kouheim1979.github.io/rin-harbor/

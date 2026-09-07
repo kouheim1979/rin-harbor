@@ -2,13 +2,13 @@
   "id": "./",
   "name": "リンハーバー",
   "short_name": "リンハーバー",
-  "description": "リンといっしょに、小さな港と大切な船を育てる合成ゲーム。",
+  "description": "つくって、届けて、港を育てる。リンと一緒に楽しむ合成アドベンチャー。",
   "lang": "ja",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#0b2030",
-  "theme_color": "#0b2030",
+  "background_color": "#eaf6f1",
+  "theme_color": "#eaf6f1",
   "icons": [
     {
       "src": "assets/art-v1/icon-192.png",

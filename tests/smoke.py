@@ -56,7 +56,7 @@ def open_game(page, seed=None):
         page.add_init_script('('+init+')()')
         page.goto(URL,wait_until='networkidle')
     page.wait_for_function("typeof S!=='undefined' && S!==null && typeof RELEASE!=='undefined'")
-    check('correct release',page.evaluate('RELEASE')=='20260906-r1')
+    check('correct release',page.evaluate('RELEASE')=='20260907-sea2')
     page.wait_for_timeout(180)
 
 def reload_page(page):
@@ -201,7 +201,7 @@ def run_suite(browser, engine):
         page.set_viewport_size({'width':w,'height':h});page.evaluate("setView('game')");page.wait_for_timeout(140)
         boxes={s:page.locator(s).bounding_box() for s in ['#board','.boardBox','.controls','#msg','#nav']}
         board,nav,box=boxes['#board'],boxes['#nav'],boxes['.boardBox']
-        check(engine+f' layout {w}x{h}',board['width']>100 and board['x']>=0 and board['y']>=0 and board['y']+board['height']<=nav['y']+1 and board['x']+board['width']<=w+1 and boxes['#msg']['y']+boxes['#msg']['height']<=nav['y']+1,str(boxes))
+        check(engine+f' layout {w}x{h}',board['width']>100 and board['x']>=0 and board['y']>=0 and board['x']+board['width']<=w+1 and (board['y']+board['height']<=nav['y']+1 or board['x']+board['width']<=nav['x']+1) and (boxes['#msg']['y']+boxes['#msg']['height']<=nav['y']+1 or boxes['#msg']['x']+boxes['#msg']['width']<=nav['x']+1),str(boxes))
         page.screenshot(path=str(OUT/(engine+f'-{w}x{h}.png')))
     check(engine+' no JS exceptions',not errors,errors)
     context.close()
@@ -231,7 +231,7 @@ def run_suite(browser, engine):
         page.wait_for_function("document.getElementById('offlineStatus').textContent.includes('保存済み')||document.getElementById('offlineStatus').textContent.includes('新しい')",timeout=90000)
         page.wait_for_function('navigator.serviceWorker.controller!==null',timeout=30000)
         page.evaluate("S.auto=false;S.autoStory=false;S.coins=2345;S.repair=5;saveNow()")
-        await_cache=page.evaluate("async()=>{const c=await caches.open('rin-harbor-20260906-r1');const all=await c.keys();return all.length}")
+        await_cache=page.evaluate("async()=>{const c=await caches.open('rin-harbor-20260907-sea2');const all=await c.keys();return all.length}")
         check(engine+' offline assets installed',await_cache>=16)
         await_none=page.evaluate("async()=>{await caches.open('unrelated-app-sentinel');return true}")
         context.set_offline(True)
@@ -264,7 +264,7 @@ if __name__=='__main__':
         with sync_playwright() as p:
             for engine in os.environ.get('BROWSERS','chromium,webkit').split(','):
                 options={'headless':True}
-                if INLINE:options.update(executable_path='/usr/bin/chromium',args=['--no-sandbox'])
+                if INLINE or os.environ.get('SYSTEM_CHROMIUM')=='1':options.update(executable_path='/usr/bin/chromium',args=['--no-sandbox'])
                 browser=getattr(p,engine).launch(**options)
                 try:run_suite(browser,engine)
                 finally:browser.close()

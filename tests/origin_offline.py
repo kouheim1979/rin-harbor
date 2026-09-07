@@ -45,7 +45,7 @@ def test_origin_offline(browser, root, check, reload_page):
         page.wait_for_function("navigator.serviceWorker.controller!==null", timeout=60000)
         page.wait_for_function("document.getElementById('offlineStatus').textContent.includes('保存済み')||document.getElementById('offlineStatus').textContent.includes('新しい')", timeout=60000)
         page.evaluate("S.auto=false;S.autoStory=false;S.coins=2345;S.repair=5;saveNow()")
-        keys = page.evaluate("async()=>{const c=await caches.open('rin-harbor-20260906-r1');return (await c.keys()).map(r=>r.url)}")
+        keys = page.evaluate("async()=>{const c=await caches.open('rin-harbor-20260907-sea2');return (await c.keys()).map(r=>r.url)}")
         check(label+'app and art cached', len(keys)>=16)
         page.evaluate("caches.open('unrelated-app-sentinel')")
         server.shutdown()
