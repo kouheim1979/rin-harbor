@@ -1,0 +1,80 @@
+name: Harden Sea Journal image painting
+on:
+  push:
+    branches: [fix/sea-journal-image-paint]
+    paths: [.github/workflows/fix-image-readiness.yml]
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - name: Make decoded artwork readiness explicit and test painted pixels
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          game=Path('game.js').read_text()
+          assert "const RELEASE='20260907-sea2';" in game
+          replacement='''function setStageImage(img,stage){
+            const path=bestStagePath(stage);
+            if(img.dataset.src===path&&img.dataset.ready==='true'&&img.complete&&img.naturalWidth>0)return;
+            img.dataset.src=path;img.dataset.ready='false';img.alt=REPAIR_TITLES[int(stage,0,5)];
+            img.decoding='sync';img.loading='eager';img.width=2880;img.height=2160;
+            const fail=()=>{if(img.dataset.src!==path)return;img.style.display='none';img.dataset.src='';img.dataset.ready='false';if(img.id==='homeShipImage'){$('homeShipFallback').hidden=false;$('homeShipFallback').textContent='画像を読み込めません。港を開き直してください。'}};
+            const show=async()=>{
+              try{if(img.decode)await img.decode()}catch(_e){if(!img.complete||!img.naturalWidth){fail();return}}
+              if(img.dataset.src!==path)return;
+              img.style.display='block';img.style.visibility='visible';
+              if(img.id==='homeShipImage')$('homeShipFallback').hidden=true;
+              requestAnimationFrame(()=>requestAnimationFrame(()=>{if(img.dataset.src===path)img.dataset.ready='true'}));
+            };
+            img.onload=show;img.onerror=fail;img.src=path;
+            if(img.complete&&img.naturalWidth>0)show();
+          }
+          '''
+          game,n=re.subn(r'function setStageImage\(img,stage\)\{[\s\S]*?(?=\nfunction openAlbum)',lambda _:replacement,game,count=1)
+          assert n==1
+          Path('game.js').write_text(game)
+          # A new cache version prevents existing players receiving stale JS.
+          for name in ['game.js','index.html','sw.js','tests/smoke.py','tests/youth.py','tests/origin_offline.py']:
+              p=Path(name);text=p.read_text().replace('20260907-sea2','20260907-sea2paint').replace('?v=sea2','?v=sea2paint');p.write_text(text)
+          # Do not treat naturalWidth alone as proof the image is painted.
+          p=Path('tests/youth.py');text=p.read_text().replace('from PIL import Image','from PIL import Image,ImageStat')
+          helper='''
+          def photo_snapshot(page,engine,path):
+              page.wait_for_function("document.getElementById('homeShipImage').dataset.ready==='true'")
+              page.locator('#homeShipImage').evaluate("async e=>{await e.decode();await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))}")
+              page.wait_for_timeout(150)
+              raw=page.screenshot(path=str(path))
+              im=Image.open(io.BytesIO(raw)).convert('RGB')
+              box=page.locator('#homeShipImage').bounding_box()
+              scale=im.width/page.viewport_size['width']
+              area=im.crop((round((box['x']+3)*scale),round((box['y']+3)*scale),round((box['x']+box['width']-3)*scale),round((box['y']+box['height']-3)*scale)))
+              check(engine+' harbor photograph is actually painted',max(ImageStat.Stat(area).stddev)>20)
+          '''
+          text=text.replace('def suite(browser,engine):',helper+'\ndef suite(browser,engine):')
+          needle="page.screenshot(path=str(OUT/(engine+'-harbor.png')))"
+          assert needle in text
+          text=text.replace(needle,"photo_snapshot(page,engine,OUT/(engine+'-harbor.png'))")
+          p.write_text(text)
+          p=Path('tests/smoke.py');text=p.read_text();needle="page.screenshot(path=str(OUT/(engine+'-harbor.png')))";assert needle in text
+          text=text.replace(needle,"page.locator('#homeShipImage').evaluate(\"async e=>{await e.decode();await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))}\");page.wait_for_timeout(150);"+needle)
+          p.write_text(text)
+          PY
+      - name: Validate patched sources
+        run: |
+          node --check game.js
+          node --check sw.js
+          python3 -m py_compile tests/smoke.py tests/youth.py tests/origin_offline.py
+      - name: Commit only application and tests
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add game.js index.html sw.js tests/smoke.py tests/youth.py tests/origin_offline.py
+          git commit -m 'fix: decode and paint harbor artwork before marking it ready'
+          git push origin HEAD:${{ github.ref_name }}
