@@ -59,6 +59,18 @@ def open_game(page, seed=None):
     check('correct release',page.evaluate('RELEASE')=='20260906-r1')
     page.wait_for_timeout(180)
 
+def reload_page(page):
+    """Use the browser's normal reload, not WebKit's automation reload path.
+
+    https://github.com/microsoft/playwright/issues/42273
+    A new document is mandatory: the previous JS state must not satisfy checks.
+    No navigation errors or failed offline assertions are suppressed.
+    """
+    page.evaluate("window.__rinReloadSentinel=true")
+    with page.expect_navigation(wait_until='load', timeout=45000):
+        page.evaluate("setTimeout(()=>location.reload(),0)")
+    page.wait_for_function("window.__rinReloadSentinel===undefined && typeof S!=='undefined' && S!==null")
+
 def fresh(page):
     page.evaluate("closeAlbum();normalize({...freshState(),auto:false,autoStory:false,daily:S.daily});selected=null;undoState=null;combo=0;lastMergeAt=0;clearTimeout(comboTimer);clearTimeout(hintTimer);setView('game');")
     page.wait_for_timeout(60)
@@ -203,7 +215,7 @@ def run_suite(browser, engine):
     check(engine+' legacy progress migration',page.evaluate("S.repair===3&&S.story===4&&S.coins===1264&&S.board[7]==='drink8'&&S.auto===false&&S.book.drink8===1"))
     check(engine+' original save backup',page.evaluate("JSON.parse(localStorage.getItem(BACKUP_KEY)).coins===1234"))
     if not INLINE:
-        page.wait_for_timeout(300);page.reload(wait_until='networkidle')
+        page.wait_for_timeout(300);reload_page(page)
         check(engine+' persisted reload',page.evaluate("S.repair===3&&S.coins===1264&&S.board[7]==='drink8'"))
     context.close()
 
@@ -217,7 +229,9 @@ def run_suite(browser, engine):
         await_cache=page.evaluate("async()=>{const c=await caches.open('rin-harbor-20260906-r1');const all=await c.keys();return all.length}")
         check(engine+' offline assets installed',await_cache>=16)
         await_none=page.evaluate("async()=>{await caches.open('unrelated-app-sentinel');return true}")
-        context.set_offline(True);page.reload(wait_until='load');page.wait_for_function('typeof S!=="undefined"&&S!==null')
+        context.set_offline(True)
+        check(engine+' uncached network request fails',page.evaluate("fetch('./__offline_probe__?t='+Date.now(),{cache:'no-store'}).then(()=>false,()=>true)"))
+        reload_page(page)
         check(engine+' offline reload with progress',page.evaluate('S.coins===2345&&S.repair===5'))
         page.evaluate("setView('home')");page.wait_for_function('document.getElementById("homeShipImage").naturalWidth>1000')
         check(engine+' offline repair artwork',page.locator('#homeShipImage').evaluate('(e)=>e.naturalWidth>1000'))
