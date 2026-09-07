@@ -18,7 +18,9 @@ jobs:
       - name: Install image reconstruction tools
         run: python3 -m pip install opencv-contrib-python-headless==4.11.0.86 Pillow==11.3.0
       - name: Integrate the age-appropriate game UI
-        run: python3 scripts/upgrade_youth.py
+        run: |
+          python3 scripts/upgrade_youth.py
+          git restore .github/workflows/verify-game.yml
       - name: Reconstruct and validate seven high-resolution illustrations
         run: python3 scripts/build_hd.py
       - name: Check complete application syntax
@@ -31,10 +33,11 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add index.html game.js youth.css sw.js manifest.webmanifest README.md tests/smoke.py tests/origin_offline.py .github/workflows/verify-game.yml assets/art-hd
+          git add index.html game.js youth.css sw.js manifest.webmanifest README.md tests/smoke.py tests/origin_offline.py assets/art-hd
           git commit -m 'feat: Sea Journal UI and 2x reconstructed artwork, preserving player saves'
           git push origin HEAD:${{ github.ref_name }}
       - name: Package exact sources and artwork for verification
+        if: always()
         run: |
           python3 - <<'PY'
           import zipfile
@@ -45,6 +48,7 @@ jobs:
                       z.write(p,str(p))
           PY
       - name: Keep reconstruction manifest and complete build
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: sea-journal-hd-build
