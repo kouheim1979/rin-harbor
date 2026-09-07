@@ -1,0 +1,12 @@
+<section id="screenWarehouse" class="screen">
+  <header class="card warehouseHeading">
+    <div class="top"><div><span class="eyebrow">あとで使うアイテムを、大切に。</span><div class="title">みなとの倉庫</div></div><button data-go="game" class="primary">ゲームへ</button></div>
+    <p class="sub">保管中のアイテムは自動納品に使われません。</p>
+    <div class="warehouseStatus"><span>保管数 <strong id="warehouseCount">0 / 12</strong></span><button id="warehouseUndo" disabled>1手戻す</button></div>
+    <div class="warehouseMeterTrack"><i id="warehouseMeter"></i></div>
+    <p id="warehouseBoardSpace" role="status" class="tiny"></p>
+    <details class="warehouseHelp"><summary>使い方・倉庫の大きさ</summary><p>盤面のアイテムを選択 →「預ける」で保管。「取り出す」で1こずつ盤面へ戻します。屋台は預けられません。</p><p>最初は12こ。リン号を1段階修理すると4こ分、プレイヤーレベルが3つ上がるごとに2こ分増えます。取り出した直後の自動納品はしません。</p></details>
+  </header>
+  <div id="warehouseFilters" class="warehouseFilters" role="group" aria-label="保管アイテムの種類"></div>
+  <div id="warehouseList" class="warehouseList"></div>
+</section>
