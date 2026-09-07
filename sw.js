@@ -15,11 +15,15 @@ const decorate=async response=>{
   const headers=new Headers(response.headers);headers.set('content-type','text/html; charset=utf-8');
   return new Response(html,{status:response.status,statusText:response.statusText,headers});
 };
-self.addEventListener('install',event=>{
-  event.waitUntil((async()=>{const cache=await caches.open(CACHE);await cache.addAll(CORE.map(path=>new Request(url(path),{cache:'reload'})));await self.skipWaiting()})());
-});
+self.addEventListener('install',event=>{event.waitUntil((async()=>{const cache=await caches.open(CACHE);await cache.addAll(CORE.map(path=>new Request(url(path),{cache:'reload'})));await self.skipWaiting()})())});
 self.addEventListener('activate',event=>{
-  event.waitUntil((async()=>{for(const name of await caches.keys())if(name.startsWith(PREFIX)&&name!==CACHE)await caches.delete(name);await self.clients.claim()})());
+  event.waitUntil((async()=>{
+    for(const name of await caches.keys())if(name.startsWith(PREFIX)&&name!==CACHE)await caches.delete(name);
+    await self.clients.claim();
+    // Move already-open Rin Harbor tabs onto the new UI automatically once.
+    const windows=await self.clients.matchAll({type:'window',includeUncontrolled:true});
+    for(const client of windows){try{await client.navigate(client.url)}catch(_e){}}
+  })());
 });
 self.addEventListener('message',event=>{if(event.data?.type==='READY')event.ports[0]?.postMessage({version:VERSION})});
 self.addEventListener('fetch',event=>{
