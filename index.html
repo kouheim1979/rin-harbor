@@ -6,27 +6,25 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="format-detection" content="telephone=no">
-<meta name="theme-color" content="#071622">
+<meta name="theme-color" content="#eaf6f1">
 <title>リンハーバー</title>
 <link rel="apple-touch-icon" href="assets/art-v1/icon-180.png">
 <link rel="icon" type="image/png" sizes="192x192" href="assets/art-v1/icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="assets/art-v1/icon-512.png">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="preload" as="image" href="assets/art-v1/hero.jpg">
-<link rel="stylesheet" href="base.css?v=20260906r1">
-<link rel="stylesheet" href="premium.css?v=20260906r1">
-<link rel="stylesheet" href="art.css?v=20260906r1">
+<link rel="preload" as="image" href="assets/art-hd/hero.webp">
+<link rel="stylesheet" href="youth.css?v=sea2">
 </head>
 <body data-view="opening">
 <div class="app">
   <section id="screenOpening" class="screen on">
     <div class="openingHero">
       <div id="openingFallback" class="openingFallback"></div>
-      <img id="openingImage" src="assets/art-v1/hero.jpg" alt="リンとリン号が待つ夕暮れの港" fetchpriority="high" decoding="async">
-      <div class="openingBadge">RIN HARBOR · ADVENTURE</div>
-      <div class="openingCopy">
-        <span class="eyebrow">A HARBOR MERGE ADVENTURE</span><b>リンハーバー</b>
-        <span class="sub">小さな港から、大きな物語へ。リン号をよみがえらせる、あなたとリンの冒険。</span>
+      <img id="openingImage" src="assets/art-hd/hero.webp" alt="リンとリン号が待つ夕暮れの港" width="2880" height="1620" fetchpriority="high" decoding="async">
+      <div class="openingBadge">RIN HARBOR ／ SEA JOURNAL</div>
+      <div class="titleCompass" aria-hidden="true"><svg class="uiIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><path d="m16 8-2 6-6 2 2-6Z"/></svg></div><div class="openingCopy">
+        <span class="eyebrow">ひとつ合成。ひとつ冒険。</span><b>リンハーバー</b>
+        <span class="sub">この港のつづきは、きみとリンで。</span>
       </div>
       <div class="openingButtons">
         <button id="startHome" class="primary">港へ行く</button>
@@ -34,14 +32,14 @@
       </div>
     </div>
     <div class="card">
-      <div class="sub">リンといっしょに、もう一度この船を海へ。</div>
+      <div class="sub">セーブは自動。自分のペースで冒険しよう。</div>
     </div>
   </section>
 
   <section id="screenHome" class="screen">
     <header class="card">
-      <div class="top">
-        <div><span class="eyebrow">HARBOR BASE</span><div class="title">リンハーバー</div><div class="sub">今日の港とリン号</div></div>
+      <div class="top homeWelcome">
+        <div><span class="eyebrow">おかえり、キャプテン。</span><div class="title">リンの港</div></div>
         <span id="streakBadge" class="streak">🔥 1日</span>
       </div>
       <div class="harborHero">
@@ -49,21 +47,21 @@
         <div id="homeShipFallback" class="harborFallback">⛵</div>
         <div class="harborOverlay">
           <div>
-            <b id="repairTitle">壊れたリン号</b>
+            <div class="tiny">次の目標</div><b id="repairTitle">壊れたリン号</b>
             <div id="repairSub" class="tiny">修理を進めよう</div>
             <div class="progress"><i id="repairBar"></i></div>
           </div>
           <button id="repairBtn" class="good">🔧 修理</button>
         </div>
       </div>
-      <div id="statsHome" class="stats"></div>
+      <div id="repairJourney" class="repairJourney" aria-label="修理の進み具合"></div><div id="statsHome" class="stats"></div>
       <div class="harborGuide"><img src="assets/art-v1/icon-180.png" alt="リン" width="48" height="48"><div><small>RIN</small><p id="homeGuide">いっしょに船を直そう！</p></div><button data-go="game" class="primary">合成して遊ぶ</button></div>
     </header>
-    <div class="homeGrid">
+    <button class="playBanner" data-go="game"><span><small>材料を集めて、船をよみがえらせよう</small><strong>合成して遊ぶ</strong></span><span aria-hidden="true">→</span></button><div class="homeGrid">
       <button class="menuCard" data-go="game"><span class="menuIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><path d="M17 14v6M14 17h6"/></svg></span><b>合成ゲーム</b><span class="tiny">ヒント・やり直し対応</span></button>
       <button class="menuCard" data-go="orders"><span class="menuIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 15h16l-2 4H6l-2-4Z"/><path d="M7 15V9h6v6M13 9V5h4v10"/><path d="M2.5 20.5c1.2.7 2.4.7 3.6 0 1.2.7 2.4.7 3.6 0 1.2.7 2.4.7 3.6 0 1.2.7 2.4.7 3.6 0 1.2.7 2.4.7 3.6 0"/></svg></span><b id="homeOrderTitle">注文</b><span id="homeOrderSub" class="tiny">8件あります</span></button>
-      <button class="menuCard" data-go="story"><span class="menuIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H12v16H6.5A2.5 2.5 0 0 0 4 21.5v-16Z"/><path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H12v16h5.5A2.5 2.5 0 0 1 20 21.5v-16Z"/></svg></span><b>物語と修理</b><span class="tiny">港とリン号を成長</span></button>
-      <button class="menuCard" data-go="book"><span class="menuIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4.5 6.5 12 10l7.5-3.5L12 3Z"/><path d="M6 9v5c0 2.2 2.7 4 6 4s6-1.8 6-4V9"/><path d="M20 8v6"/></svg></span><b>リン図鑑</b><span id="homeBookSub" class="tiny">発見を集めよう</span></button>
+      <button class="menuCard" data-go="story"><span class="menuIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H12v16H6.5A2.5 2.5 0 0 0 4 21.5v-16Z"/><path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H12v16h5.5A2.5 2.5 0 0 1 20 21.5v-16Z"/></svg></span><b>冒険のきろく</b><span class="tiny">港とリン号を成長</span></button>
+      <button class="menuCard" data-go="book"><span class="menuIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4.5 6.5 12 10l7.5-3.5L12 3Z"/><path d="M6 9v5c0 2.2 2.7 4 6 4s6-1.8 6-4V9"/><path d="M20 8v6"/></svg></span><b>お宝コレクション</b><span id="homeBookSub" class="tiny">発見を集めよう</span></button>
     </div>
 
 
@@ -82,26 +80,26 @@
     <div class="gamePage">
       <header class="gameHead">
         <div class="gameHeadRow">
-          <div><span class="eyebrow">MERGE DECK</span><div class="gameTitle">合成デッキ</div></div>
+          <div><span class="eyebrow">つくって、届けて、港を育てる</span><div class="gameTitle">合成アトリエ</div></div>
           <button data-go="home" class="ghostBtn"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 11.2 12 4l8.5 7.2"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M9.5 20v-6h5v6"/></svg></span></button>
         </div>
-        <div id="miniStats" class="miniStats"></div>
+        <div id="miniStats" class="miniStats"></div><div class="xpRail" aria-label="次のレベルまで"><i id="gameXp"></i></div>
       </header>
-      <div class="boardBox"><div id="board" class="board" role="group" aria-label="合成ボード・6行6列"></div></div>
-      <div class="orderStrip">
+      <div class="orderStrip"><div class="requestAvatar" aria-hidden="true"><svg class="uiIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 7h18v13H3zM3 7l9 7 9-7M8 4h8"/></svg></div>
         <div>
           <b id="nextOrderTitle">注文チェック中</b>
           <small id="nextOrderSub">同じアイテムを重ねよう</small>
           <div id="nextWants" class="wantMini"></div>
         </div>
-        <button id="quickTop" class="primary" disabled>🚢 納品</button>
+        <button id="quickTop" class="primary" disabled>お届け</button>
       </div>
+      <div class="boardBox"><div id="board" class="board" role="group" aria-label="合成ボード・6行6列"></div></div>
       <div class="controls">
-        <button id="autoGame" class="good">🤖 ON</button>
-        <button id="hint" class="warn">💡 ヒント</button>
-        <button id="undo" disabled>↩️ 戻す</button>
-        <button id="sort">🧺 整列</button>
-        <button id="sell" class="danger" disabled>🪙 売る</button>
+        <button id="autoGame" class="good">自動 ON</button>
+        <button id="hint" class="warn">ヒント</button>
+        <button id="undo" disabled>戻す</button>
+        <button id="sort">整列</button>
+        <button id="sell" class="danger" disabled>売る</button>
         <button id="clear">解除</button>
       </div>
       <div id="msg" class="msg" role="status" aria-live="polite">屋台をタップすると材料がずっと出るよ。</div>
@@ -111,7 +109,7 @@
   <section id="screenOrders" class="screen">
     <header class="card">
       <div class="top">
-        <div><span class="eyebrow">HARBOR REQUESTS</span><div class="title">注文</div><div class="sub">そろった注文から納品できます</div></div>
+        <div><span class="eyebrow">材料を届けて、港のみんなを笑顔に</span><div class="title">みんなのお願い</div><div class="sub">そろった注文から納品できます</div></div>
         <button id="quickOrders" class="primary">納品を確認</button>
       </div>
       <div id="statsOrders" class="stats"></div>
@@ -125,7 +123,7 @@
   <section id="screenStory" class="screen">
     <header class="card">
       <div class="top">
-        <div><span class="eyebrow">HARBOR STORY</span><div class="title">物語</div><div class="sub">港の物語とリン号の修理記録</div></div>
+        <div><span class="eyebrow">少しずつ広がる、港の物語</span><div class="title">冒険のきろく</div><div class="sub">港の物語とリン号の修理記録</div></div>
         <button data-go="game" class="primary">星を集める</button>
       </div>
       <div id="statsStory" class="stats"></div>
@@ -143,7 +141,7 @@
   <section id="screenBook" class="screen">
     <header class="card">
       <div class="bookHeader">
-        <div><span class="eyebrow">COLLECTION</span><div class="title">リン図鑑</div><div id="bookProgressText" class="sub">発見中</div></div>
+        <div><span class="eyebrow">まだ見ぬお宝を、見つけに行こう</span><div class="title">お宝コレクション</div><div id="bookProgressText" class="sub">発見中</div></div>
         <button data-go="game" class="primary">集める</button>
       </div>
       <div id="statsBook" class="stats"></div>
@@ -153,7 +151,7 @@
       <div id="bookChains" class="bookChains"></div>
     </div>
     <div class="card">
-      <h2>設定・データ</h2><p id="storageStatus" class="tiny">この端末に自動保存しています。</p><p id="offlineStatus" class="tiny">オフラインの準備中…</p><button id="downloadSave">バックアップをファイルに保存</button><p class="tiny">バージョン 2026.09.06-r1</p>
+      <h2>設定・データ</h2><p id="storageStatus" class="tiny">この端末に自動保存しています。</p><p id="offlineStatus" class="tiny">オフラインの準備中…</p><button id="downloadSave">バックアップをファイルに保存</button><p class="tiny">バージョン 2026.09.07 Sea Journal</p>
       <div class="settings">
         <div class="setting"><div><b>自動納品</b><small>完成した注文を自動で届けます</small></div><button id="autoSetting" class="toggle"></button></div>
         <div class="setting"><div><b>物語を自動進行</b><small>星が足りたら次の話を開放します</small></div><button id="autoStorySetting" class="toggle"></button></div>
@@ -185,7 +183,8 @@
   </div>
 </div>
 
-<script src="game.js?v=20260906r1"></script>
+<script src="item-art.js?v=sea2"></script>
+<script src="game.js?v=sea2"></script>
 <noscript>遊ぶにはJavaScriptを有効にしてください。</noscript>
 </body>
 </html>

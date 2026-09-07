@@ -1,0 +1,98 @@
+{
+  "method": "FSRCNN neural super-resolution x2 from existing 1440px masters; reconstructed detail, not native-resolution new art",
+  "model_source": "https://raw.githubusercontent.com/Saafke/FSRCNN_Tensorflow/master/models/FSRCNN_x2.pb",
+  "model_sha256": "366b33f0084c7b3f2bf6724f0a2c77bca94fcec9d7b6d72389d330073b380d5c",
+  "files": [
+    {
+      "path": "assets/art-hd/hero.webp",
+      "width": 2880,
+      "height": 1620,
+      "bytes": 680424,
+      "sha256": "94420b41150ea86889336e00e9eb7b490e1901e9cfde49276937bc0383c70711"
+    },
+    {
+      "path": "assets/art-hd/repair-0.webp",
+      "width": 2880,
+      "height": 2160,
+      "bytes": 1028270,
+      "sha256": "c2a96f621272159e77c04adc4a1fdd4e07aa5c150ab637d92031a05855bfc653"
+    },
+    {
+      "path": "assets/art-hd/thumb-0.webp",
+      "width": 480,
+      "height": 360,
+      "bytes": 70638,
+      "sha256": "0ade63cb19e71c8a6c796dc2a2258567f2134ba42ca9cbc338b7ba41c1448ef5"
+    },
+    {
+      "path": "assets/art-hd/repair-1.webp",
+      "width": 2880,
+      "height": 2160,
+      "bytes": 898974,
+      "sha256": "f5a7e67c39a3d0dbc4a782d8361f17ff8be47873646ba2f28d71a8ed96d81b7d"
+    },
+    {
+      "path": "assets/art-hd/thumb-1.webp",
+      "width": 480,
+      "height": 360,
+      "bytes": 65324,
+      "sha256": "6f8d7e305fc1cf2d209919d50f1c6dd40c0107b686d249e90cfeca362b206e7d"
+    },
+    {
+      "path": "assets/art-hd/repair-2.webp",
+      "width": 2880,
+      "height": 2160,
+      "bytes": 967980,
+      "sha256": "9b4735fb5ceb15cce3e99e097b85937d17cc0b8ce8329aedbdc79a09cdd59b87"
+    },
+    {
+      "path": "assets/art-hd/thumb-2.webp",
+      "width": 480,
+      "height": 360,
+      "bytes": 68420,
+      "sha256": "59dc55f5ad0a439b8e536ba34e8bc2eafe774df5f3dedc6c0dc9783c0e7668f2"
+    },
+    {
+      "path": "assets/art-hd/repair-3.webp",
+      "width": 2880,
+      "height": 2160,
+      "bytes": 871150,
+      "sha256": "86c18ec358caf159d61709f1d5df8d6699d743287a4633b406ed9938ddee8541"
+    },
+    {
+      "path": "assets/art-hd/thumb-3.webp",
+      "width": 480,
+      "height": 360,
+      "bytes": 64030,
+      "sha256": "f005df92b88b070c04b16195cbdfaf96a5a79fbca8d8763224fd16e2196ca7db"
+    },
+    {
+      "path": "assets/art-hd/repair-4.webp",
+      "width": 2880,
+      "height": 2160,
+      "bytes": 925398,
+      "sha256": "0e98b5fe3fcef0bdde33125bd91f193c3487e6a63cefc2e285c631488f139599"
+    },
+    {
+      "path": "assets/art-hd/thumb-4.webp",
+      "width": 480,
+      "height": 360,
+      "bytes": 65550,
+      "sha256": "35a8a977b97ade99a3afd6e2f752b5abbd52d3474780650aef4caff37d3a19e4"
+    },
+    {
+      "path": "assets/art-hd/repair-5.webp",
+      "width": 2880,
+      "height": 2160,
+      "bytes": 931206,
+      "sha256": "04efb9d094940618bd96eebb3a18d901d8eda8c73e9d865e23b199a51f501928"
+    },
+    {
+      "path": "assets/art-hd/thumb-5.webp",
+      "width": 480,
+      "height": 360,
+      "bytes": 68742,
+      "sha256": "9dd665ee6a05975a8bf622e79be0faa9d921717d467382b12c7bef528b8b6c8b"
+    }
+  ]
+}
