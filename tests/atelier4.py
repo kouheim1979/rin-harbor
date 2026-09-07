@@ -47,8 +47,6 @@ def suite(browser,engine):
         check(engine+' withdrawal conserves count',page.evaluate("S.warehouse.drink1===1&&countBoard().drink1===1") and total(page)==n)
         reload(page);check(engine+' warehouse survives actual reload',page.evaluate('S.warehouse.drink1===1') and total(page)==n)
         check(engine+' migration backup exists',page.evaluate("localStorage.getItem('rin_harbor_before_warehouse_v4')!==null"))
-        # Install a once-only fixture at the NEXT document's initialization. Seeding
-        # the live document's disk directly is overwritten by its pagehide autosave.
         seed=page.evaluate("({...S,warehouse:{fish6:2,toy7:1},coins:246,repair:2})")
         encoded=json.dumps(json.dumps(seed,ensure_ascii=False),ensure_ascii=False)
         page.add_init_script("if(!sessionStorage.getItem('atelier4-migration-seeded')){localStorage.setItem('rin_harbor_save_v10',"+encoded+");sessionStorage.setItem('atelier4-migration-seeded','1');}")
@@ -75,11 +73,14 @@ def suite(browser,engine):
         masks=page.evaluate('''async()=>{const out={};for(const id of Object.keys(ITEM_SHAPES)){
           const svg=new DOMParser().parseFromString(itemArt(id),'image/svg+xml').documentElement;
           svg.setAttribute('xmlns','http://www.w3.org/2000/svg');svg.removeAttribute('data-art');
+          svg.setAttribute('width','68');svg.setAttribute('height','68');
           svg.querySelectorAll('*').forEach(el=>{for(const attr of ['fill','stroke']){let v=el.getAttribute(attr);if(v&&v!=='none')el.setAttribute(attr,'#000')}});
-          const im=new Image();im.src='data:image/svg+xml;base64,'+btoa(new XMLSerializer().serializeToString(svg));await im.decode();
+          const im=new Image(68,68);im.src='data:image/svg+xml;base64,'+btoa(new XMLSerializer().serializeToString(svg));await im.decode();
           const cv=document.createElement('canvas');cv.width=cv.height=48;const cx=cv.getContext('2d');cx.drawImage(im,0,0,48,48);
           out[id]=Array.from(cx.getImageData(0,0,48,48).data).filter((v,i)=>i%4===3).map(v=>v>128?'1':'0').join('');
         }return out}''')
+        (OUT/(engine+'-shape-masks.json')).write_text(json.dumps(masks))
+        check(engine+' all silhouettes visibly rasterized',all(v.count('1')>100 for v in masks.values()),{k:v.count('1') for k,v in masks.items()})
         check(engine+' all 53 actual silhouettes distinct',len(masks)==53 and len(set(masks.values()))==53)
         for kind in ['drink','dessert','shell','fish','toy']:
             worst=(1,'','')
