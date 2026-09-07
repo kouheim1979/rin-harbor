@@ -219,8 +219,13 @@ def run_suite(browser, engine):
         check(engine+' persisted reload',page.evaluate("S.repair===3&&S.coins===1264&&S.board[7]==='drink8'"))
     context.close()
 
-    # An isolated origin context for real HTTP caching/offline tests.
-    if not INLINE:
+    # WebKit: stop a real TCP origin instead of using the broken offline simulator.
+    if not INLINE and engine=='webkit':
+        from origin_offline import test_origin_offline
+        test_origin_offline(browser,ROOT,check,reload_page)
+
+    # Chromium: also test simulated airplane mode against BASE_URL itself.
+    if not INLINE and engine=='chromium':
         context=browser.new_context(viewport={'width':390,'height':844},is_mobile=True,has_touch=True)
         page=context.new_page();page.goto(URL,wait_until='networkidle')
         page.wait_for_function("document.getElementById('offlineStatus').textContent.includes('保存済み')||document.getElementById('offlineStatus').textContent.includes('新しい')",timeout=90000)
