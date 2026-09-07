@@ -13,7 +13,8 @@
 <link rel="icon" type="image/png" sizes="512x512" href="assets/art-v1/icon-512.png">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="preload" as="image" href="assets/art-hd/hero.webp">
-<link rel="stylesheet" href="youth.css?v=sea2paint">
+<link rel="stylesheet" href="youth.css?v=atelier4">
+<!-- Replaces item-art-levels.js and warehouse.js. Features are integrated before startup. -->
 </head>
 <body data-view="opening">
 <div class="app">
@@ -57,7 +58,7 @@
       <div id="repairJourney" class="repairJourney" aria-label="修理の進み具合"></div><div id="statsHome" class="stats"></div>
       <div class="harborGuide"><img src="assets/art-v1/icon-180.png" alt="リン" width="48" height="48"><div><small>RIN</small><p id="homeGuide">いっしょに船を直そう！</p></div><button data-go="game" class="primary">合成して遊ぶ</button></div>
     </header>
-    <button class="playBanner" data-go="game"><span><small>材料を集めて、船をよみがえらせよう</small><strong>合成して遊ぶ</strong></span><span aria-hidden="true">→</span></button><div class="homeGrid">
+    <button class="playBanner" data-go="game"><span><small>材料を集めて、船をよみがえらせよう</small><strong>合成して遊ぶ</strong></span><span aria-hidden="true">→</span></button><div class="homeGrid"><button class="menuCard" data-go="warehouse"><span class="menuIcon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m3 8 9-5 9 5v12H3ZM3 8h18M8 20v-8h8v8M8 16h8"/></svg></span><b>みなとの倉庫</b><span class="tiny"><span data-warehouse-count>0/12</span> 保管中</span></button>
       <button class="menuCard" data-go="game"><span class="menuIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><path d="M17 14v6M14 17h6"/></svg></span><b>合成ゲーム</b><span class="tiny">ヒント・やり直し対応</span></button>
       <button class="menuCard" data-go="orders"><span class="menuIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 15h16l-2 4H6l-2-4Z"/><path d="M7 15V9h6v6M13 9V5h4v10"/><path d="M2.5 20.5c1.2.7 2.4.7 3.6 0 1.2.7 2.4.7 3.6 0 1.2.7 2.4.7 3.6 0 1.2.7 2.4.7 3.6 0 1.2.7 2.4.7 3.6 0"/></svg></span><b id="homeOrderTitle">注文</b><span id="homeOrderSub" class="tiny">8件あります</span></button>
       <button class="menuCard" data-go="story"><span class="menuIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H12v16H6.5A2.5 2.5 0 0 0 4 21.5v-16Z"/><path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H12v16h5.5A2.5 2.5 0 0 1 20 21.5v-16Z"/></svg></span><b>冒険のきろく</b><span class="tiny">港とリン号を成長</span></button>
@@ -81,7 +82,7 @@
       <header class="gameHead">
         <div class="gameHeadRow">
           <div><span class="eyebrow">つくって、届けて、港を育てる</span><div class="gameTitle">合成アトリエ</div></div>
-          <button data-go="home" class="ghostBtn"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 11.2 12 4l8.5 7.2"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M9.5 20v-6h5v6"/></svg></span></button>
+          <div class="gameHeadActions"><button id="autoGame" class="good" aria-label="自動納品の切り替え">自動 ON</button><button id="openWarehouse" aria-label="倉庫を開く"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m3 8 9-5 9 5v12H3ZM3 8h18M8 20v-8h8v8M8 16h8"/></svg><b>倉庫</b><small data-warehouse-count>0/12</small></button></div>
         </div>
         <div id="miniStats" class="miniStats"></div><div class="xpRail" aria-label="次のレベルまで"><i id="gameXp"></i></div>
       </header>
@@ -95,7 +96,7 @@
       </div>
       <div class="boardBox"><div id="board" class="board" role="group" aria-label="合成ボード・6行6列"></div></div>
       <div class="controls">
-        <button id="autoGame" class="good">自動 ON</button>
+        <button id="store" class="primary" disabled>預ける</button>
         <button id="hint" class="warn">ヒント</button>
         <button id="undo" disabled>戻す</button>
         <button id="sort">整列</button>
@@ -138,6 +139,19 @@
     </div>
   </section>
 
+<section id="screenWarehouse" class="screen">
+  <header class="card warehouseHeading">
+    <div class="top"><div><span class="eyebrow">あとで使うアイテムを、大切に。</span><div class="title">みなとの倉庫</div></div><button data-go="game" class="primary">ゲームへ</button></div>
+    <p class="sub">保管中のアイテムは自動納品に使われません。</p>
+    <div class="warehouseStatus"><span>保管数 <strong id="warehouseCount">0 / 12</strong></span><button id="warehouseUndo" disabled>1手戻す</button></div>
+    <div class="warehouseMeterTrack"><i id="warehouseMeter"></i></div>
+    <p id="warehouseBoardSpace" role="status" class="tiny"></p>
+    <details class="warehouseHelp"><summary>使い方・倉庫の大きさ</summary><p>盤面のアイテムを選択 →「預ける」で保管。「取り出す」で1こずつ盤面へ戻します。屋台は預けられません。</p><p>最初は12こ。リン号を1段階修理すると4こ分、プレイヤーレベルが3つ上がるごとに2こ分増えます。取り出した直後の自動納品はしません。</p></details>
+  </header>
+  <div id="warehouseFilters" class="warehouseFilters" role="group" aria-label="保管アイテムの種類"></div>
+  <div id="warehouseList" class="warehouseList"></div>
+</section>
+
   <section id="screenBook" class="screen">
     <header class="card">
       <div class="bookHeader">
@@ -147,11 +161,11 @@
       <div id="statsBook" class="stats"></div>
     </header>
     <div class="card">
-      <h2>アイテム図鑑</h2>
+      <h2>アイテム図鑑</h2><p class="tiny">形とLvを見くらべよう。同じ種類・同じLvの2つが合成できます。</p>
       <div id="bookChains" class="bookChains"></div>
     </div>
     <div class="card">
-      <h2>設定・データ</h2><p id="storageStatus" class="tiny">この端末に自動保存しています。</p><p id="offlineStatus" class="tiny">オフラインの準備中…</p><button id="downloadSave">バックアップをファイルに保存</button><p class="tiny">バージョン 2026.09.07 Sea Journal</p>
+      <h2>設定・データ</h2><p id="storageStatus" class="tiny">この端末に自動保存しています。</p><p id="offlineStatus" class="tiny">オフラインの準備中…</p><button id="downloadSave">バックアップをファイルに保存</button><p class="tiny">バージョン 2026.09.08 Atelier 4</p>
       <div class="settings">
         <div class="setting"><div><b>自動納品</b><small>完成した注文を自動で届けます</small></div><button id="autoSetting" class="toggle"></button></div>
         <div class="setting"><div><b>物語を自動進行</b><small>星が足りたら次の話を開放します</small></div><button id="autoStorySetting" class="toggle"></button></div>
@@ -169,6 +183,7 @@
   <button data-go="home"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 11.2 12 4l8.5 7.2"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M9.5 20v-6h5v6"/></svg></span>ホーム</button>
   <button data-go="game"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><path d="M17 14v6M14 17h6"/></svg></span>ゲーム</button>
   <button data-go="orders"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 15h16l-2 4H6l-2-4Z"/><path d="M7 15V9h6v6M13 9V5h4v10"/><path d="M2.5 20.5c1.2.7 2.4.7 3.6 0 1.2.7 2.4.7 3.6 0 1.2.7 2.4.7 3.6 0 1.2.7 2.4.7 3.6 0 1.2.7 2.4.7 3.6 0"/></svg></span>注文</button>
+  <button data-go="warehouse"><span class="navIcon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m3 8 9-5 9 5v12H3ZM3 8h18M8 20v-8h8v8M8 16h8"/></svg></span>倉庫</button>
   <button data-go="story"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H12v16H6.5A2.5 2.5 0 0 0 4 21.5v-16Z"/><path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H12v16h5.5A2.5 2.5 0 0 1 20 21.5v-16Z"/></svg></span>物語</button>
   <button data-go="book"><span class="navIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4.5 6.5 12 10l7.5-3.5L12 3Z"/><path d="M6 9v5c0 2.2 2.7 4 6 4s6-1.8 6-4V9"/><path d="M20 8v6"/></svg></span>図鑑</button>
 </nav>
@@ -183,8 +198,8 @@
   </div>
 </div>
 
-<script src="item-art.js?v=sea2paint"></script>
-<script src="game.js?v=sea2paint"></script>
+<script src="item-art.js?v=atelier4"></script>
+<script src="game.js?v=atelier4"></script>
 <noscript>遊ぶにはJavaScriptを有効にしてください。</noscript>
 </body>
 </html>

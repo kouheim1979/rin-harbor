@@ -50,7 +50,7 @@ const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 
-const RELEASE='20260907-sea2paint';
+const RELEASE='20260908-atelier4';
 const BACKUP_KEY='rin_harbor_before_art_v1';
 const int=(v,lo=0,hi=1e9,fallback=0)=>Number.isFinite(Number(v))?Math.max(lo,Math.min(hi,Math.floor(Number(v)))):fallback;
 let hintTimer=null, comboTimer=null, albumIndex=0, albumReturnFocus=null, diskAvailable=true;
@@ -68,6 +68,7 @@ function freshState(){
     board:initialBoard(),coins:50,stars:0,level:1,xp:0,story:0,repair:0,orders:[],
     book:{gen_cafe:1,gen_sea:1,drink1:1,dessert1:1,shell1:1},
     auto:true,autoStory:true,sound:false,haptics:true,
+    warehouse:{},
     stats:{merges:0,delivered:0,generated:0,sold:0,bestLevel:1},
     daily:{date:'',lastVisit:'',streak:0,missions:[],allClearClaimed:false}
   };
@@ -80,6 +81,7 @@ function loadRaw(){
       const value=JSON.parse(raw);
       if(!value||!Array.isArray(value.board)||value.board.length!==GRID)continue;
       try{if(!localStorage.getItem(BACKUP_KEY))localStorage.setItem(BACKUP_KEY,raw)}catch(_e){}
+      try{if(!localStorage.getItem('rin_harbor_before_warehouse_v4'))localStorage.setItem('rin_harbor_before_warehouse_v4',raw)}catch(_e){}
       return value;
     }catch(_e){}
   }
@@ -96,7 +98,8 @@ function normalize(raw){
   for(const k of ['auto','autoStory','haptics'])S[k]=src[k]!==false;
   S.sound=src.sound===true;
   S.book={};for(const id of Object.keys(ITEMS))if(src.book?.[id])S.book[id]=1;
-  S.board.forEach(id=>{if(id)S.book[id]=1});
+  S.warehouse=cleanWarehouse(src.warehouse);
+  [...S.board,...Object.keys(S.warehouse)].forEach(id=>{if(id)S.book[id]=1});
   S.orders=Array.isArray(src.orders)?src.orders.filter(validOrder).slice(0,ORDER_TARGET).map(sanitizeOrder):[];
   S.stats={...base.stats};for(const k of Object.keys(S.stats))S.stats[k]=int(src.stats?.[k]);
   S.stats.bestLevel=Math.max(S.stats.bestLevel,highestDiscoveredLevel());
@@ -288,7 +291,7 @@ function repairShip(){
 }
 
 function setView(v){
-  if(!['opening','home','game','orders','story','book'].includes(v))v='home';
+  if(!['opening','home','game','orders','warehouse','story','book'].includes(v))v='home';
   cancelDrag();view=v;document.body.dataset.view=v;selected=null;hintPair=[];
   document.querySelectorAll('.screen').forEach(x=>x.classList.remove('on'));
   $('screen'+v[0].toUpperCase()+v.slice(1)).classList.add('on');
@@ -344,13 +347,13 @@ function renderGame(){
   ensureOrders();const focused=document.activeElement?.closest?.('.cell')?.dataset.i;
   $('miniStats').innerHTML=miniStatsHtml();$('gameXp').style.width=Math.min(100,S.xp/xpThreshold()*100)+'%';
   $('board').innerHTML=S.board.map((id,i)=>{
-    const cls=['cell',!id?'empty':'',id&&isGen(id)?'gen':'',selected===i?'sel':'',hintPair.includes(i)?'hint':''].filter(Boolean).join(' ');
+    const cls=['cell',!id?'empty':'',id&&isGen(id)?'gen':'',selected===i?'sel':'',hintPair.includes(i)?'hint':'',selected!==null&&i!==selected&&id&&id===S.board[selected]&&ITEMS[id].next?'matchable':''].filter(Boolean).join(' ');
     return `<button class="${cls}" data-i="${i}" aria-label="${id?esc(nameOf(id))+' レベル'+levelOf(id):'空きマス '+(i+1)}">${id?`<div class="em">${itemArt(id)}</div><div class="nm">${esc(nameOf(id))}</div>${isGen(id)?'<div class="tap">材料</div>':`<div class="lv">Lv${levelOf(id)}</div>`}`:''}</button>`;
   }).join('');
   renderNextOrder();
   $('sell').disabled=selected===null||!S.board[selected]||isGen(S.board[selected]);
   $('autoGame').textContent=S.auto?'自動 ON':'自動 OFF';$('autoGame').className=S.auto?'good':'off';
-  updateUndoButton();if(focused!==undefined)$('board').querySelector(`[data-i="${focused}"]`)?.focus({preventScroll:true});requestAnimationFrame(fitBoard);
+  renderWarehouseLinks();updateUndoButton();if(focused!==undefined)$('board').querySelector(`[data-i="${focused}"]`)?.focus({preventScroll:true});requestAnimationFrame(fitBoard);
 }
 
 function renderNextOrder(){
@@ -401,7 +404,7 @@ function renderBook(){
 
 function setToggle(btn,on,onText,offText){btn.textContent=on?onText:offText;btn.className='toggle '+(on?'good':'off')}
 
-function renderAll(){ensureDaily();ensureOrders();if(view==='home')renderHome();if(view==='game')renderGame();if(view==='orders')renderOrders();if(view==='story')renderStory();if(view==='book')renderBook();saveSoon()}
+function renderAll(){ensureDaily();ensureOrders();if(view==='home')renderHome();if(view==='game')renderGame();if(view==='orders')renderOrders();if(view==='story')renderStory();if(view==='book')renderBook();if(view==='warehouse')renderWarehouse();renderWarehouseLinks();saveSoon()}
 
 function say(t){if($('msg'))$('msg').textContent=t}
 
@@ -458,6 +461,7 @@ function importSave(){
     if(code.length>2000000)throw Error('too large');
     const text=code.trim().startsWith('{')?code:new TextDecoder('utf-8',{fatal:true}).decode(Uint8Array.from(atob(code.trim().replace(/^RH10-/,'')),c=>c.charCodeAt(0)));
     const value=JSON.parse(text);if(!value||!Array.isArray(value.board)||value.board.length!==GRID||value.board.some(id=>id!==null&&!hasItem(id)))throw Error('invalid');
+    cleanWarehouse(value.warehouse,true);
     if(!confirm('現在の進行状況を、このバックアップで置き換えますか？'))return;
     const old=JSON.stringify(S);normalize(value);undoState=old;undoLabel='復元';selected=null;renderAll();saveNow();toast('バックアップを復元しました');
   }catch(_e){alert('バックアップを読み込めませんでした。進行状況は変更していません。')}
@@ -537,6 +541,8 @@ $('board').addEventListener('keydown',e=>{
 document.body.addEventListener('click',e=>{
   const button=e.target.closest('button');if(button?.disabled)return;
   const go=e.target.closest('[data-go]');if(go){setView(go.dataset.go);return}
+  const take=e.target.closest('[data-take]');if(take){takeFromWarehouse(take.dataset.take);return}
+  const filter=e.target.closest('[data-warehouse-filter]');if(filter){warehouseFilter=filter.dataset.warehouseFilter;renderWarehouse();return}
   const claim=e.target.closest('[data-claim]');if(claim){claimMission(Number(claim.dataset.claim));return}
   const order=e.target.closest('[data-order]');if(order){completeOrder(Number(order.dataset.order),false);renderAll();saveSoon();return}
   const story=e.target.closest('[data-story]');if(story){openStory(Number(story.dataset.story));return}
@@ -555,6 +561,7 @@ function toggleSetting(key){
 }
 bind('autoGame',()=>toggleSetting('auto'));bind('autoSetting',()=>toggleSetting('auto'));
 bind('autoStorySetting',()=>toggleSetting('autoStory'));bind('soundSetting',()=>toggleSetting('sound'));bind('hapticSetting',()=>toggleSetting('haptics'));
+bind('openWarehouse',()=>setView('warehouse'));bind('store',storeSelected);bind('warehouseUndo',undo);
 bind('hint',showHint);bind('undo',undo);bind('sort',sortBoard);bind('sell',sellSelected);
 bind('clear',()=>{selected=null;hintPair=[];renderGame();say('カフェや海辺のかごから材料を出してね。')});
 bind('repairBtn',repairShip);bind('openAlbum',()=>openAlbum(S.repair));bind('viewerClose',closeAlbum);
@@ -578,6 +585,69 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 window.addEventListener('resize',()=>requestAnimationFrame(fitBoard));
 if(window.visualViewport)visualViewport.addEventListener('resize',()=>requestAnimationFrame(fitBoard));
 if(window.ResizeObserver)new ResizeObserver(fitBoard).observe(document.querySelector('.boardBox'));
+
+/* Integrated before load(): inventory is normalized before the first autosave. */
+function cleanWarehouse(raw, strict=false){
+  if(raw===undefined)return {};
+  if(!raw||typeof raw!=='object'||Array.isArray(raw)){
+    if(strict)throw new Error('Invalid warehouse');
+    return {};
+  }
+  const result={};
+  for(const [id,n] of Object.entries(raw)){
+    if(!hasItem(id)||isGen(id)||!Number.isSafeInteger(n)||n<0){
+      if(strict)throw new Error('Invalid warehouse item');
+      continue;
+    }
+    if(n>0)result[id]=n;
+  }
+  return result;
+}
+function warehouseUsed(){return Object.values(S.warehouse).reduce((n,x)=>n+x,0)}
+function warehouseCapacity(){return 12+S.repair*4+Math.floor(Math.max(0,S.level-1)/3)*2}
+function warehouseEntries(){
+  const kinds=Object.keys(CHAIN_DATA);
+  return Object.entries(S.warehouse).sort(([a],[b])=>kinds.indexOf(ITEMS[a].k)-kinds.indexOf(ITEMS[b].k)||levelOf(a)-levelOf(b));
+}
+let warehouseFilter='all';
+function storeSelected(){
+  const id=selected===null?null:S.board[selected];
+  if(!hasItem(id)||isGen(id)){say('預けるアイテムを盤面で選んでね。屋台は預けられません。');return false}
+  if(warehouseUsed()>=warehouseCapacity()){toast('倉庫が満杯です。取り出してから預けてね。');return false}
+  makeUndo('倉庫へ預ける');
+  S.board[selected]=null;S.warehouse[id]=(S.warehouse[id]||0)+1;
+  selected=null;hintPair=[];cancelDrag();
+  renderAll();saveNow();sound('pop');say(`${nameOf(id)}（Lv${levelOf(id)}）を倉庫に預けたよ。`);
+  toast('倉庫に預けました');return true;
+}
+function takeFromWarehouse(id){
+  if(!hasItem(id)||isGen(id)||!S.warehouse[id])return false;
+  const pos=S.board.indexOf(null);
+  if(pos<0){toast('盤面がいっぱいです。先に合成するか、別のアイテムを預けてね。');return false}
+  makeUndo('倉庫から取り出す');
+  S.board[pos]=id;S.book[id]=1;S.warehouse[id]--;
+  if(S.warehouse[id]===0)delete S.warehouse[id];
+  selected=null;hintPair=[];
+  // Never auto-deliver a freshly withdrawn item. The player controls its next use.
+  renderAll();saveNow();sound('pop');toast(`${nameOf(id)}を盤面に戻しました`);return true;
+}
+function renderWarehouseLinks(){
+  const count=`${warehouseUsed()}/${warehouseCapacity()}`;
+  document.querySelectorAll('[data-warehouse-count]').forEach(el=>el.textContent=count);
+  const store=$('store');
+  if(store)store.disabled=selected===null||!S.board[selected]||isGen(S.board[selected])||warehouseUsed()>=warehouseCapacity();
+}
+function renderWarehouse(){
+  const used=warehouseUsed(),cap=warehouseCapacity(),space=emptyCells().length;
+  $('warehouseCount').textContent=`${used} / ${cap}`;
+  $('warehouseMeter').style.width=Math.min(100,used/cap*100)+'%';
+  $('warehouseBoardSpace').textContent=space?`盤面に ${space} マスの空きがあります`:'盤面が満杯です。取り出すには空きマスを作ってね。';
+  $('warehouseUndo').disabled=!undoState;
+  $('warehouseFilters').innerHTML=[['all','すべて'],...Object.entries(CHAIN_DATA).map(([k,v])=>[k,v.label])].map(([k,label])=>`<button data-warehouse-filter="${k}" aria-pressed="${warehouseFilter===k}" class="${warehouseFilter===k?'active':''}">${esc(label)}</button>`).join('');
+  const rows=warehouseEntries().filter(([id])=>warehouseFilter==='all'||ITEMS[id].k===warehouseFilter);
+  $('warehouseList').innerHTML=rows.length?rows.map(([id,n])=>`<article class="warehouseItem" data-stored-item="${id}"><div class="warehouseArt">${itemArt(id)}</div><div class="warehouseInfo"><small>${esc(CHAIN_DATA[ITEMS[id].k].label)} ・ Lv${levelOf(id)}</small><b>${esc(nameOf(id))}</b><span>${n}こ保管中</span></div><button class="good" data-take="${id}" ${space?'':'disabled'} aria-label="${esc(nameOf(id))} レベル${levelOf(id)}を1こ取り出す">取り出す</button></article>`).join(''):`<div class="warehouseEmpty">${gameIcon('warehouse')}<h3>${used?'この種類はまだありません':'倉庫はまだ空っぽです'}</h3><p>ゲームでアイテムを1回タップして選び、<br><b>「預ける」</b>を押すとここに入ります。</p><button data-go="game" class="primary">ゲームで預ける</button></div>`;
+  renderWarehouseLinks();
+}
 
 try{load();setView('opening');if(!diskAvailable)toast('保存できない設定です。バックアップを残してください。')}
 catch(error){$('openingFallback').hidden=false;$('openingFallback').textContent='起動に失敗しました。保存データは削除せず、ページを開き直してください。';console.error('Rin Harbor startup failed',error)}
