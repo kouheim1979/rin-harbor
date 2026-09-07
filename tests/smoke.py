@@ -56,7 +56,7 @@ def open_game(page, seed=None):
         page.add_init_script('('+init+')()')
         page.goto(URL,wait_until='networkidle')
     page.wait_for_function("typeof S!=='undefined' && S!==null && typeof RELEASE!=='undefined'")
-    check('correct release',page.evaluate('RELEASE')=='20260907-sea2')
+    check('correct release',page.evaluate('RELEASE')=='20260907-sea2paint')
     page.wait_for_timeout(180)
 
 def reload_page(page):
@@ -92,7 +92,7 @@ def run_suite(browser, engine):
     page.wait_for_timeout(1900);page.screenshot(path=str(OUT/(engine+'-title.png')))
     page.locator('#startHome').click();page.wait_for_function("document.getElementById('homeShipImage').naturalWidth>0")
     check(engine+' home art decoded',page.locator('#homeShipImage').evaluate('(e)=>e.naturalWidth>=1000'))
-    page.screenshot(path=str(OUT/(engine+'-harbor.png')))
+    page.locator('#homeShipImage').evaluate("async e=>{await e.decode();await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))}");page.wait_for_timeout(150);page.screenshot(path=str(OUT/(engine+'-harbor.png')))
     page.locator('#nav [data-go="game"]').click()
     page.screenshot(path=str(OUT/(engine+'-board.png')))
 
@@ -231,7 +231,7 @@ def run_suite(browser, engine):
         page.wait_for_function("document.getElementById('offlineStatus').textContent.includes('保存済み')||document.getElementById('offlineStatus').textContent.includes('新しい')",timeout=90000)
         page.wait_for_function('navigator.serviceWorker.controller!==null',timeout=30000)
         page.evaluate("S.auto=false;S.autoStory=false;S.coins=2345;S.repair=5;saveNow()")
-        await_cache=page.evaluate("async()=>{const c=await caches.open('rin-harbor-20260907-sea2');const all=await c.keys();return all.length}")
+        await_cache=page.evaluate("async()=>{const c=await caches.open('rin-harbor-20260907-sea2paint');const all=await c.keys();return all.length}")
         check(engine+' offline assets installed',await_cache>=16)
         await_none=page.evaluate("async()=>{await caches.open('unrelated-app-sentinel');return true}")
         context.set_offline(True)

@@ -7,7 +7,7 @@ import json
 import os
 from pathlib import Path
 import urllib.request
-from PIL import Image
+from PIL import Image,ImageStat
 from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[1]
 URL=os.environ.get('BASE_URL','http://127.0.0.1:8765/').rstrip('/')+'/'
@@ -36,18 +36,30 @@ def asset_checks():
             hashes.append(row['sha256'])
         else:check('Thumbnail is 480 by 360 '+row['path'],im.size==(480,360))
     check('Six different full repair images',len(set(hashes))==6)
-    check('Live CSS equals tested CSS',hashlib.sha256(fetch('youth.css?v=sea2')).digest()==hashlib.sha256((ROOT/'youth.css').read_bytes()).digest())
-    check('Live vector art equals tested vector art',hashlib.sha256(fetch('item-art.js?v=sea2')).digest()==hashlib.sha256((ROOT/'item-art.js').read_bytes()).digest())
+    check('Live CSS equals tested CSS',hashlib.sha256(fetch('youth.css?v=sea2paint')).digest()==hashlib.sha256((ROOT/'youth.css').read_bytes()).digest())
+    check('Live vector art equals tested vector art',hashlib.sha256(fetch('item-art.js?v=sea2paint')).digest()==hashlib.sha256((ROOT/'item-art.js').read_bytes()).digest())
 def visible_without_nav(page,selector):
     a=page.locator(selector).bounding_box();n=page.locator('#nav').bounding_box()
     return bool(a and n and a['x']>=-1 and a['y']>=-1 and (a['y']+a['height']<=n['y']+1 or a['x']+a['width']<=n['x']+1))
+
+def photo_snapshot(page,engine,path):
+    page.wait_for_function("document.getElementById('homeShipImage').dataset.ready==='true'")
+    page.locator('#homeShipImage').evaluate("async e=>{await e.decode();await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))}")
+    page.wait_for_timeout(150)
+    raw=page.screenshot(path=str(path))
+    im=Image.open(io.BytesIO(raw)).convert('RGB')
+    box=page.locator('#homeShipImage').bounding_box()
+    scale=im.width/page.viewport_size['width']
+    area=im.crop((round((box['x']+3)*scale),round((box['y']+3)*scale),round((box['x']+box['width']-3)*scale),round((box['y']+box['height']-3)*scale)))
+    check(engine+' harbor photograph is actually painted',max(ImageStat.Stat(area).stddev)>20)
+
 def suite(browser,engine):
     context=browser.new_context(viewport={'width':390,'height':844},device_scale_factor=3,is_mobile=True,has_touch=True)
     try:
         page=context.new_page();errors=[]
         page.on('pageerror',lambda e:errors.append(str(e)))
         page.goto(URL,wait_until='networkidle')
-        page.wait_for_function("typeof RELEASE!=='undefined' && RELEASE==='20260907-sea2'")
+        page.wait_for_function("typeof RELEASE!=='undefined' && RELEASE==='20260907-sea2paint'")
         page.wait_for_function("document.getElementById('openingImage').complete&&document.getElementById('openingImage').naturalWidth===2880")
         page.wait_for_timeout(2200)
         check(engine+' one cohesive theme',page.locator('link[rel="stylesheet"]').count()==1 and 'youth.css' in page.locator('link[rel="stylesheet"]').get_attribute('href'))
@@ -66,7 +78,7 @@ def suite(browser,engine):
         check(engine+' play button visible on 390 phone',visible_without_nav(page,'.playBanner'))
         check(engine+' all five restoration checkpoints',page.locator('#repairJourney span').count()==5)
         check(engine+' menu icons use stroked art',page.locator('.menuCard[data-go="story"] svg').evaluate("e=>getComputedStyle(e).fill==='none'"))
-        page.screenshot(path=str(OUT/(engine+'-harbor.png')))
+        photo_snapshot(page,engine,OUT/(engine+'-harbor.png'))
         page.locator('.playBanner').click()
         page.wait_for_selector('.cell .itemArt')
         check(engine+' initial board items use real SVG',page.locator('.cell:not(.empty) .itemArt').count()==6)
@@ -113,4 +125,4 @@ if __name__=='__main__':
     except Exception as exc:
         RESULTS.append({'test':'Sea Journal suite','result':'failed','error':str(exc)})
         raise
-    finally:(OUT/'report.json').write_text(json.dumps({'base_url':URL,'release':'20260907-sea2','checks':RESULTS},ensure_ascii=False,indent=2))
+    finally:(OUT/'report.json').write_text(json.dumps({'base_url':URL,'release':'20260907-sea2paint','checks':RESULTS},ensure_ascii=False,indent=2))
