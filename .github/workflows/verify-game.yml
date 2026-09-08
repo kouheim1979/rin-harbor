@@ -4,7 +4,7 @@ on:
     branches: [main]
   push:
     branches: [main]
-    paths: ['index.html', '*.css', '*.js', 'manifest.webmanifest', 'assets/art-v1/**', 'assets/art-hd/**', 'tests/**', '.github/workflows/verify-game.yml']
+    paths: ['index.html', '*.css', '*.js', 'manifest.webmanifest', 'assets/art-v1/**', 'assets/art-hd/**', 'assets/video/**', 'tests/**', '.github/workflows/verify-game.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -14,15 +14,21 @@ jobs:
     timeout-minutes: 18
     steps:
       - uses: actions/checkout@v4
-      - name: Set up test browsers
+      - name: Set up test browsers and movie verifier
         run: |
           python3 -m pip install playwright==1.57.0 Pillow==11.3.0
           python3 -m playwright install --with-deps chromium webkit
-      - name: Check syntax and start local server
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          ffprobe -version | head -1
+      - name: Check syntax, movie assets, and start local server
         run: |
           node --check game.js
           node --check item-art.js
           node --check sw.js
+          test -s assets/video/title-loop.mp4
+          test -s assets/video/repair-1.mp4
+          test -s assets/video/repair-5.mp4
           python3 -m http.server 8765 > /tmp/rin-http.log 2>&1 &
       - name: Chromium and WebKit regression tests
         env:
@@ -32,6 +38,7 @@ jobs:
           python3 tests/smoke.py
           python3 tests/youth.py
           python3 tests/atelier4.py
+          python3 tests/video.py
       - name: Wait for published release
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
@@ -49,7 +56,7 @@ jobs:
               time.sleep(5)
           else: raise RuntimeError('Expected release was not published in time')
           PY
-      - name: Verify actual public URL including inventory and offline reload
+      - name: Verify actual public URL including movies, inventory and offline reload
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
           BASE_URL: https://kouheim1979.github.io/rin-harbor/
@@ -58,6 +65,7 @@ jobs:
           python3 tests/smoke.py
           python3 tests/youth.py
           python3 tests/atelier4.py
+          python3 tests/video.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:

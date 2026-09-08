@@ -50,10 +50,10 @@ const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 
-const RELEASE='20260908-atelier4';
+const RELEASE='20260908-video1';
 const BACKUP_KEY='rin_harbor_before_art_v1';
 const int=(v,lo=0,hi=1e9,fallback=0)=>Number.isFinite(Number(v))?Math.max(lo,Math.min(hi,Math.floor(Number(v)))):fallback;
-let hintTimer=null, comboTimer=null, albumIndex=0, albumReturnFocus=null, diskAvailable=true;
+let hintTimer=null, comboTimer=null, albumIndex=0, albumReturnFocus=null, movieReturnFocus=null, movieStage=0, diskAvailable=true;
 const reducedMotion=()=>window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 
@@ -287,7 +287,38 @@ function repairShip(){
   if(S.coins<cost){toast(`🪙 あと ${cost-S.coins}コイン 必要だよ`);haptic(40);return}
   makeUndo('修理');S.coins-=cost;S.repair++;
   toast(`🔧 ${REPAIR_MESSAGES[S.repair]}`);say(REPAIR_MESSAGES[S.repair]);celebrate(14);sound('repair');haptic([20,40,20]);
-  renderAll();saveNow();openAlbum(S.repair);
+  renderAll();saveNow();playRepairMovie(S.repair);
+}
+
+function finishRepairMovie(openAlbumAfter=true){
+  const modal=$('movieViewer'),video=$('repairMovie');
+  if(!modal)return;
+  try{video.onended=null;video.onerror=null;video.pause();video.removeAttribute('src');video.load()}catch(_e){}
+  modal.classList.remove('on');modal.setAttribute('aria-hidden','true');
+  document.querySelector('.app').inert=false;$('nav').inert=false;
+  const stage=movieStage;
+  if(openAlbumAfter&&stage>0){openAlbum(stage);return}
+  if(movieReturnFocus?.isConnected)movieReturnFocus.focus({preventScroll:true});
+  movieReturnFocus=null;
+}
+
+function playRepairMovie(stage,openAlbumAfter=true){
+  stage=int(stage,1,5,1);movieStage=stage;
+  if(reducedMotion()){if(openAlbumAfter)openAlbum(stage);return}
+  const modal=$('movieViewer'),video=$('repairMovie');
+  if(!modal||!video){if(openAlbumAfter)openAlbum(stage);return}
+  movieReturnFocus=document.activeElement;
+  $('movieTitle').textContent=REPAIR_TITLES[stage];
+  $('movieCaption').textContent=stage===5?'リン号、ついに完成！ 港から新しい冒険へ。':REPAIR_MESSAGES[stage];
+  video.poster=bestStagePath(stage);
+  video.src=`assets/video/repair-${stage}.mp4`;
+  video.currentTime=0;video.muted=true;video.playsInline=true;
+  modal.classList.add('on');modal.setAttribute('aria-hidden','false');
+  document.querySelector('.app').inert=true;$('nav').inert=true;
+  video.onended=()=>finishRepairMovie(openAlbumAfter);
+  video.onerror=()=>finishRepairMovie(openAlbumAfter);
+  const promise=video.play();if(promise?.catch)promise.catch(()=>finishRepairMovie(openAlbumAfter));
+  $('movieSkip').focus({preventScroll:true});
 }
 
 function setView(v){
@@ -296,6 +327,7 @@ function setView(v){
   document.querySelectorAll('.screen').forEach(x=>x.classList.remove('on'));
   $('screen'+v[0].toUpperCase()+v.slice(1)).classList.add('on');
   $('nav').classList.toggle('hidden',v==='opening');
+  const openingMovie=$('openingVideo');if(openingMovie){if(v==='opening'&&!reducedMotion())openingMovie.play().catch(()=>{});else openingMovie.pause();}
   document.querySelectorAll('#nav button').forEach(b=>(b.classList.toggle('active',b.dataset.go===v),b.setAttribute('aria-current',b.dataset.go===v?'page':'false')));
   renderAll();
   const screen=$('screen'+v[0].toUpperCase()+v.slice(1));if(screen)screen.scrollTop=0;requestAnimationFrame(fitBoard);
@@ -445,6 +477,7 @@ function openAlbum(index=0){
   const viewer=$('viewer');albumIndex=int(index,0,S.repair);const item=ALBUM[albumIndex];
   if(!viewer.classList.contains('on'))albumReturnFocus=document.activeElement;
   $('viewerTitle').textContent=item.title;$('viewerText').textContent=item.text;
+  if($('viewerMovie')){$('viewerMovie').hidden=albumIndex===0;$('viewerMovie').disabled=albumIndex===0;}
   const img=$('viewerImg');img.style.display='block';img.alt=item.title;img.onload=()=>img.style.display='block';img.onerror=()=>{$('viewerText').textContent='画像を読み込めませんでした。閉じて、もう一度開いてください。';img.style.display='none'};img.src=bestStagePath(albumIndex);
   $('viewerThumbs').innerHTML=ALBUM.slice(0,S.repair+1).map((it,i)=>`<button class="viewerThumb ${i===albumIndex?'primary':''}" data-view-stage="${i}" aria-label="${esc(it.title)}"><img loading="lazy" src="assets/art-hd/thumb-${i}.webp" alt=""><div>${esc(it.title)}</div></button>`).join('');
   viewer.classList.add('on');viewer.setAttribute('aria-hidden','false');document.querySelector('.app').inert=true;$('nav').inert=true;$('viewerClose').focus({preventScroll:true});
@@ -564,8 +597,10 @@ bind('autoStorySetting',()=>toggleSetting('autoStory'));bind('soundSetting',()=>
 bind('openWarehouse',()=>setView('warehouse'));bind('store',storeSelected);bind('warehouseUndo',undo);
 bind('hint',showHint);bind('undo',undo);bind('sort',sortBoard);bind('sell',sellSelected);
 bind('clear',()=>{selected=null;hintPair=[];renderGame();say('カフェや海辺のかごから材料を出してね。')});
-bind('repairBtn',repairShip);bind('openAlbum',()=>openAlbum(S.repair));bind('viewerClose',closeAlbum);
+bind('repairBtn',repairShip);bind('openAlbum',()=>openAlbum(S.repair));bind('viewerClose',closeAlbum);bind('viewerMovie',()=>{const stage=albumIndex;closeAlbum();playRepairMovie(stage,true)});bind('movieSkip',()=>finishRepairMovie(true));
 $('viewer').addEventListener('click',e=>{if(e.target===$('viewer'))closeAlbum()});
+$('movieViewer').addEventListener('click',e=>{if(e.target===$('movieViewer'))finishRepairMovie(true)});
+$('movieViewer').addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();finishRepairMovie(true)}});
 $('viewer').addEventListener('keydown',e=>{
   if(e.key==='Escape'){e.preventDefault();closeAlbum();return}
   if(e.key==='ArrowLeft'){e.preventDefault();openAlbum(Math.max(0,albumIndex-1));return}
@@ -579,9 +614,10 @@ $('viewer').addEventListener('keydown',e=>{
 bind('exportSave',exportSave);bind('downloadSave',downloadSave);bind('importSave',importSave);bind('reset',resetGame);
 $('openingImage').onload=()=>{$('openingFallback').hidden=true};
 $('openingImage').onerror=()=>{$('openingImage').style.display='none';$('openingFallback').hidden=false;$('openingFallback').textContent='港の絵を読み込めませんでした。再読み込みしてください。'};
+if($('openingVideo')){$('openingVideo').onerror=()=>{$('openingVideo').style.display='none'};if(reducedMotion())$('openingVideo').style.display='none';}
 if($('openingImage').complete&&$('openingImage').naturalWidth>0)$('openingImage').onload();
 window.addEventListener('pagehide',()=>{cancelDrag();saveNow()});
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'){cancelDrag();saveNow()}else if(S){ensureDaily();renderAll()}});
+document.addEventListener('visibilitychange',()=>{const video=$('openingVideo');if(document.visibilityState==='hidden'){cancelDrag();if(video)video.pause();saveNow()}else if(S){ensureDaily();renderAll();if(view==='opening'&&video&&!reducedMotion())video.play().catch(()=>{})}});
 window.addEventListener('resize',()=>requestAnimationFrame(fitBoard));
 if(window.visualViewport)visualViewport.addEventListener('resize',()=>requestAnimationFrame(fitBoard));
 if(window.ResizeObserver)new ResizeObserver(fitBoard).observe(document.querySelector('.boardBox'));

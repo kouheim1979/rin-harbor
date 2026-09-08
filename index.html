@@ -13,7 +13,7 @@
 <link rel="icon" type="image/png" sizes="512x512" href="assets/art-v1/icon-512.png">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="preload" as="image" href="assets/art-hd/hero.webp">
-<link rel="stylesheet" href="youth.css?v=atelier4">
+<link rel="stylesheet" href="youth.css?v=video1">
 <!-- Replaces item-art-levels.js and warehouse.js. Features are integrated before startup. -->
 </head>
 <body data-view="opening">
@@ -21,6 +21,7 @@
   <section id="screenOpening" class="screen on">
     <div class="openingHero">
       <div id="openingFallback" class="openingFallback"></div>
+      <video id="openingVideo" class="openingVideo" muted autoplay loop playsinline preload="metadata" poster="assets/art-hd/hero.webp" aria-hidden="true"><source src="assets/video/title-loop.mp4" type="video/mp4"></video>
       <img id="openingImage" src="assets/art-hd/hero.webp" alt="リンとリン号が待つ夕暮れの港" width="2880" height="1620" fetchpriority="high" decoding="async">
       <div class="openingBadge">RIN HARBOR ／ SEA JOURNAL</div>
       <div class="titleCompass" aria-hidden="true"><svg class="uiIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><path d="m16 8-2 6-6 2 2-6Z"/></svg></div><div class="openingCopy">
@@ -191,15 +192,23 @@
 <div id="celebrate" class="celebrate"></div>
 <div id="viewer" class="viewer" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="viewerTitle">
   <div class="viewerPanel">
-    <div class="viewerHead"><b id="viewerTitle">修理アルバム</b><button id="viewerClose" class="off">閉じる</button></div>
+    <div class="viewerHead"><b id="viewerTitle">修理アルバム</b><div class="viewerActions"><button id="viewerMovie" class="warn">ムービー</button><button id="viewerClose" class="off">閉じる</button></div></div>
     <img id="viewerImg" class="viewerImg" alt="">
     <div id="viewerText" class="viewerText"></div>
     <div id="viewerThumbs" class="viewerThumbs"></div>
   </div>
 </div>
 
-<script src="item-art.js?v=atelier4"></script>
-<script src="game.js?v=atelier4"></script>
+<div id="movieViewer" class="movieViewer" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="movieTitle">
+  <div class="moviePanel">
+    <div class="movieTop"><div><span class="movieKicker">REPAIR MOVIE</span><b id="movieTitle">リン号を修理！</b></div><button id="movieSkip" class="off">スキップ</button></div>
+    <video id="repairMovie" class="repairMovie" muted playsinline preload="metadata"></video>
+    <div id="movieCaption" class="movieCaption">リン号が少しずつ元気になっていくよ。</div>
+  </div>
+</div>
+
+<script src="item-art.js?v=video1"></script>
+<script src="game.js?v=video1"></script>
 <noscript>遊ぶにはJavaScriptを有効にしてください。</noscript>
 </body>
 </html>

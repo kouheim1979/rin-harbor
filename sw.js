@@ -1,10 +1,10 @@
 'use strict';
-const VERSION='20260908-atelier4';
+const VERSION='20260908-video1';
 const PREFIX='rin-harbor-';
 const CACHE=PREFIX+VERSION;
 const ROOT=new URL('./',self.location.href);
 const url=p=>new URL(p,ROOT).href;
-const CORE=['index.html','youth.css?v=atelier4','item-art.js?v=atelier4','game.js?v=atelier4','manifest.webmanifest','assets/art-hd/hero.webp',...Array.from({length:6},(_,i)=>`assets/art-hd/repair-${i}.webp`),...Array.from({length:6},(_,i)=>`assets/art-hd/thumb-${i}.webp`),'assets/art-v1/icon-180.png','assets/art-v1/icon-192.png','assets/art-v1/icon-512.png'];
+const CORE=['index.html','youth.css?v=video1','item-art.js?v=video1','game.js?v=video1','manifest.webmanifest','assets/art-hd/hero.webp',...Array.from({length:6},(_,i)=>`assets/art-hd/repair-${i}.webp`),...Array.from({length:6},(_,i)=>`assets/art-hd/thumb-${i}.webp`),'assets/art-v1/icon-180.png','assets/art-v1/icon-192.png','assets/art-v1/icon-512.png','assets/video/title-loop.mp4',...Array.from({length:5},(_,i)=>`assets/video/repair-${i+1}.mp4`)];
 self.addEventListener('install',e=>e.waitUntil((async()=>{const c=await caches.open(CACHE);await c.addAll(CORE.map(p=>new Request(url(p),{cache:'reload'})));await self.skipWaiting()})()));
 self.addEventListener('activate',e=>e.waitUntil((async()=>{for(const n of await caches.keys())if(n.startsWith(PREFIX)&&n!==CACHE)await caches.delete(n);await self.clients.claim()})()));
 self.addEventListener('message',e=>{if(e.data?.type==='READY')e.ports[0]?.postMessage({version:VERSION})});
