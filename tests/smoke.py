@@ -56,7 +56,7 @@ def open_game(page, seed=None):
         page.add_init_script('('+init+')()')
         page.goto(URL,wait_until='networkidle')
     page.wait_for_function("typeof S!=='undefined' && S!==null && typeof RELEASE!=='undefined'")
-    check('correct release',page.evaluate('RELEASE')=='20260908-video1')
+    check('correct release',page.evaluate('RELEASE')=='20260908-guide1')
     page.wait_for_timeout(180)
 
 def reload_page(page):
@@ -104,7 +104,9 @@ def run_suite(browser, engine):
     check(engine+' move to empty tile',page.evaluate("S.board[7]===null&&S.board[9]==='drink1'"))
     tap(page,8);tap(page,0)
     check(engine+' generator while selected',page.evaluate("S.stats.generated===1&&selected===null"))
-    page.locator('#hint').click();check(engine+' hint highlights pair',page.locator('.cell.hint').count()==2)
+    # Prior taps can leave a completed drink2; set up an actual missing-item pair.
+    page.evaluate("S.board[7]='drink1';S.board[8]='drink1';S.board[9]=null;S.orders[0]={title:'ヒント確認',wants:[{id:'drink2',n:1}],coin:26,star:1,xp:1};guidedOrder=S.orders[0];renderGame()")
+    page.locator('#hint').click();check(engine+' hint highlights pair',page.locator('.cell.hint').count()==2 and page.evaluate("hintPair.every(i=>S.board[i]==='drink1')"))
     positions=page.evaluate("S.board.map((v,i)=>isGen(v)?i:null).filter(i=>i!==null)")
     page.locator('#sort').click()
     check(engine+' sort keeps generators',positions==page.evaluate("S.board.map((v,i)=>isGen(v)?i:null).filter(i=>i!==null)"))
@@ -148,6 +150,9 @@ def run_suite(browser, engine):
     fresh(page);page.evaluate("S.coins=1550;setView('home')")
     for stage in range(1,6):
         page.locator('#repairBtn').click();page.wait_for_selector('#movieViewer.on')
+        # Opening the dialog precedes HTMLMediaElement's asynchronous source
+        # selection. Require an actual decoded frame, not just a visible modal.
+        page.wait_for_function(f"repairMovie.readyState>=2 && repairMovie.videoWidth>0 && repairMovie.currentSrc.includes('repair-{stage}.mp4')",timeout=10000)
         check(engine+f' repair stage {stage}',page.evaluate('S.repair')==stage)
         check(engine+f' repair movie {stage}',page.evaluate(f"repairMovie.currentSrc.includes('repair-{stage}.mp4')"))
         # On a fast/public load the four-second reward may naturally finish before

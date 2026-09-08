@@ -26,6 +26,7 @@ jobs:
           node --check game.js
           node --check item-art.js
           node --check sw.js
+          node tests/guide-logic.cjs
           test -s assets/video/title-loop.mp4
           test -s assets/video/repair-1.mp4
           test -s assets/video/repair-5.mp4
@@ -39,6 +40,7 @@ jobs:
           python3 tests/youth.py
           python3 tests/atelier4.py
           python3 tests/video.py
+          python3 tests/guide.py
       - name: Wait for published release
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
@@ -66,6 +68,7 @@ jobs:
           python3 tests/youth.py
           python3 tests/atelier4.py
           python3 tests/video.py
+          python3 tests/guide.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
