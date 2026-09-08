@@ -316,10 +316,10 @@ function showHint(){
   renderGame();hintTimer=setTimeout(()=>{hintPair=[];if(view==='game')renderGame()},4000);
 }
 
-function openRecipe(id,orderIndex){
+function openRecipe(id,orderIndex,trigger=document.activeElement){
   const order=S.orders[orderIndex];
   if(!hasItem(id)||isGen(id)||!Number.isInteger(orderIndex)||!order?.wants.some(w=>w.id===id))return false;
-  recipeOrder=order;recipeItem=id;recipeReturnFocus=document.activeElement;
+  recipeOrder=order;recipeItem=id;recipeReturnFocus=trigger;
   const c=countBoard(),plan=orderGuidePlan(order),kind=ITEMS[id].k,level=levelOf(id);
   $('recipeTitle').textContent=nameOf(id)+'のつくり方';
   $('recipeNeed').textContent=`この注文に${plan.needs[id]}こ ／ 盤面 ${c[id]||0}こ・倉庫 ${S.warehouse[id]||0}こ`;
@@ -343,7 +343,13 @@ function closeRecipe(restoreFocus=true){
   const modal=$('recipeViewer');if(!modal.classList.contains('on'))return;
   modal.classList.remove('on');modal.setAttribute('aria-hidden','true');
   document.querySelector('.app').inert=false;$('nav').inert=false;
-  if(restoreFocus&&recipeReturnFocus?.isConnected)recipeReturnFocus.focus({preventScroll:true});
+  if(restoreFocus){
+    // Timers can redraw the order strip while the recipe is open. Re-find its
+    // button when necessary; Safari does not focus tapped buttons automatically.
+    const fallback=document.querySelector(`.screen.on [data-recipe="${recipeItem}"][data-recipe-order="${S.orders.indexOf(recipeOrder)}"]`);
+    const target=recipeReturnFocus?.isConnected?recipeReturnFocus:fallback;
+    (target||(view==='game'?$('hint'):document.querySelector('#nav button.active')))?.focus({preventScroll:true});
+  }
   recipeReturnFocus=null;recipeOrder=null;recipeItem=null;
 }
 
@@ -661,7 +667,7 @@ $('board').addEventListener('keydown',e=>{
 document.body.addEventListener('click',e=>{
   const button=e.target.closest('button');if(button?.disabled)return;
   const go=e.target.closest('[data-go]');if(go){setView(go.dataset.go);return}
-  const recipe=e.target.closest('[data-recipe]');if(recipe){openRecipe(recipe.dataset.recipe,Number(recipe.dataset.recipeOrder));return}
+  const recipe=e.target.closest('[data-recipe]');if(recipe){openRecipe(recipe.dataset.recipe,Number(recipe.dataset.recipeOrder),recipe);return}
   const take=e.target.closest('[data-take]');if(take){takeFromWarehouse(take.dataset.take);return}
   const filter=e.target.closest('[data-warehouse-filter]');if(filter){warehouseFilter=filter.dataset.warehouseFilter;renderWarehouse();return}
   const claim=e.target.closest('[data-claim]');if(claim){claimMission(Number(claim.dataset.claim));return}
