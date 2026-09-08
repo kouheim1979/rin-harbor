@@ -56,7 +56,7 @@ jobs:
         run: |
           git config user.name 'kouheim1979'
           git config user.email 'kouheim@gmail.com'
-          git add index.html game.js youth.css sw.js tests/smoke.py tests/youth.py tests/atelier4.py tests/origin_offline.py tests/video.py .github/workflows/verify-game.yml assets/video/
+          git add index.html game.js youth.css sw.js tests/smoke.py tests/youth.py tests/atelier4.py tests/origin_offline.py tests/video.py assets/video/
           git commit -m 'feat: add title and repair reward movies'
           git push origin HEAD:feat/video-rewards
       - name: Package verified build
