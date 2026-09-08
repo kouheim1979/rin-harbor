@@ -1,4 +1,39 @@
 /* RIN HARBOR / SEA JOURNAL — one cohesive UI for ages 10–12. */
+/* Order recipes reuse the existing item art; the board keeps its five-row layout. */
+#nextWants .recipeChip{display:flex;align-items:center;gap:5px;max-width:100%;min-height:44px;padding:3px 6px;font-size:12px;line-height:1.25;text-align:left;background:#f4f3ea;border:1px solid #d9dece;border-radius:9px;box-shadow:none}
+#nextWants .recipeChip>span:first-of-type{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#nextWants .recipeChip>span:last-child{color:#496c62;font-weight:800}
+#nextWants .recipeChip.ok{background:#dceee3;color:#2a7052}
+#nextWants .recipeChip .itemArt{width:26px;height:26px;flex-shrink:0}
+.order .recipeWant{width:100%;text-align:left;min-height:54px;margin-top:8px;box-shadow:none;border:1px solid #dce3d2}
+.order .recipeWant>span:first-child{min-width:0;overflow-wrap:anywhere}
+.order .recipeWant>span:last-child{flex-shrink:0;text-align:right}
+.order .recipeWant small{display:block;font-size:12px;color:#416e64}
+.order .recipeWant .itemArt{flex-shrink:0}
+.recipeViewer{z-index:220}
+.recipeViewer .recipePanel{display:grid;grid-template-rows:auto minmax(0,1fr) auto;width:min(100%,600px);max-height:100%;overflow:hidden;background:#fffaf0;border:1px solid #ceded1;border-radius:22px;box-shadow:0 20px 60px #123c4e40}
+.recipePanel [hidden]{display:none!important}
+.recipeHead{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px;border-bottom:1px solid #dce7d7}
+.recipeHead h2{font-size:18px;line-height:1.4;margin:0;min-width:0;overflow-wrap:anywhere}
+.recipeHead button{min-height:44px;flex-shrink:0;font-size:14px}
+.recipeBody{padding:0 16px 16px;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;font-size:16px;line-height:1.6}
+.recipeNeed{font-size:14px;color:#4c7167}
+.recipeFormula{display:flex;justify-content:center;align-items:center;gap:10px;padding:12px 8px;background:#e9f3e7;border-radius:16px}
+.recipeFormula .itemArt{width:56px;height:56px;min-width:0}
+.recipeFormula>span{font-size:20px;color:#628977}
+.recipeSource{font-size:14px;color:#476f62;padding:10px 12px;border-left:3px solid #dbb365;background:#f7f0db;border-radius:0 9px 9px 0}
+.recipeSteps{padding:0;list-style:none;margin:14px 0}
+.recipeStep{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px dashed #d0ddca}
+.recipeStep>.itemArt{width:44px;height:44px;flex-shrink:0}
+.recipeStep>div{flex:1;min-width:0}
+.recipeStep b{display:block;font-size:14px;overflow-wrap:anywhere}
+.recipeStep small{display:block;font-size:12px;color:#547467}
+.recipeTimes{font-size:12px;color:#7b6135;flex-shrink:0}
+.recipeBody>button{width:100%;min-height:44px;font-size:14px}
+.recipeFoot{padding:12px 14px;display:flex;flex-direction:column;gap:8px;border-top:1px solid #dce7d7;background:#fffaf0}
+.recipeFoot>button{min-height:44px;font-size:14px}
+@media(max-width:360px){.recipeHead h2{font-size:16px}.recipeBody{padding-left:12px;padding-right:12px}.recipeFormula{gap:7px}}
+@media(orientation:landscape) and (max-height:540px){.recipeHead{padding:8px 12px}.recipeFoot{padding:8px 12px;flex-direction:row}.recipeFoot>button{flex:1}}
 :root{--ink:#234a50;--muted:#58757a;--teal:#087c79;--teal-dark:#126865;--coral:#eb896b;--gold:#e5b862;--cream:#fffaf0;--line:#d6e7df;--pink:#168d8b;--mint:#168d8b;--nav-h:78px;--paper:#fffef9;--shadow:0 8px 24px #286b7110;--piece-size:32px}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;height:100%;min-width:280px;overflow:hidden}body{font-family:'Hiragino Maru Gothic ProN','Hiragino Kaku Gothic ProN','Yu Gothic',system-ui,sans-serif;color:var(--ink);background:#eaf6f1;font-size:14px;line-height:1.5;-webkit-user-select:none;user-select:none}body::before{content:'';position:fixed;inset:0;pointer-events:none;background:radial-gradient(circle at 85% 12%,#ffffff80,transparent 35%),repeating-linear-gradient(0deg,transparent 0 34px,#36757206 35px 36px)}button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation;font-weight:750;border:1px solid var(--line);background:var(--paper);border-radius:14px;padding:10px 14px;min-height:44px;box-shadow:0 3px 0 #d2e3da;transition:transform .14s,background .14s;position:relative}button:active{transform:translateY(2px);box-shadow:0 1px 0 #d2e3da}button:focus-visible{outline:3px solid #dd9640;outline-offset:3px}button:disabled{cursor:default;opacity:.46;box-shadow:none}button svg{pointer-events:none}.primary{background:var(--teal);color:#fff;border-color:#127a78;box-shadow:0 4px 0 #116663}.good{background:#d5eee2;color:#256755;border-color:#a0ceba;box-shadow:0 3px 0 #a9ccbb}.warn{background:#f7deb0;color:#72522d;border-color:#e6c180;box-shadow:0 3px 0 #dec18c}.danger{color:#a74b43;background:#fff2e9;border-color:#ecccc1}.off{color:#658187;background:#edf2ee;box-shadow:none}.ghostBtn{background:transparent;box-shadow:none;border:1px solid #c3ddd2}.uiIcon{width:24px;height:24px;vertical-align:middle;flex:none}.hidden,[hidden]{display:none!important}
 .app{position:relative;margin:auto;max-width:940px;height:100vh;height:100dvh;padding:calc(12px + env(safe-area-inset-top,0px)) 14px calc(92px + env(safe-area-inset-bottom,0px))}.screen{display:none;height:100%;overflow:auto;overscroll-behavior:contain;scrollbar-width:none}.screen::-webkit-scrollbar{display:none}.screen.on{display:block}.screen.game{overflow:hidden;touch-action:none}.card{background:var(--paper);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);padding:17px;margin-bottom:15px}.top,.bookHeader{display:flex;align-items:center;justify-content:space-between;gap:12px}.title{font-size:28px;font-weight:850;letter-spacing:.01em;line-height:1.2}.sub{font-size:13px;color:var(--muted);line-height:1.65;margin-top:5px}.tiny{font-size:11px;color:var(--muted);font-weight:600}.eyebrow{display:block;font-size:11px;font-weight:700;letter-spacing:.12em;color:#648b87;margin-bottom:5px}h1,h2,h3,p{margin-top:0}h2{font-size:18px;margin-bottom:13px}b,strong{font-weight:800}.pill,.streak{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;border-radius:10px;padding:6px 9px;background:#fff0cb;color:#876435;font-size:11px;font-weight:750}.progress{height:8px;background:#e5ede4;border-radius:20px;overflow:hidden}.progress i{display:block;height:100%;border-radius:inherit;background:var(--teal);transition:width .3s}.stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin-top:15px}.stat{text-align:center;min-width:0;padding:6px 2px;background:#f2f7ef;border-radius:10px}.stat small{display:block;font-size:10px;color:#65807d}.stat b{display:flex;align-items:center;justify-content:center;gap:4px;font-size:14px;white-space:nowrap;font-variant-numeric:tabular-nums}.stat .uiIcon{width:17px;height:17px;color:#d49c3c}

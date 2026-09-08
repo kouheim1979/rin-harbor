@@ -18,13 +18,13 @@ def fresh(page):
     page.evaluate("closeAlbum();normalize({...freshState(),daily:S.daily,auto:false,autoStory:false});selected=null;undoState=null;setView('game')")
 def total(page):return page.evaluate('S.board.filter(x=>x&&!isGen(x)).length+warehouseUsed()')
 def reload(page):
-    page.reload(wait_until='networkidle');page.wait_for_function("typeof S!=='undefined' && RELEASE==='20260908-video1'")
+    page.reload(wait_until='networkidle');page.wait_for_function("typeof S!=='undefined' && RELEASE==='20260908-guide1'")
 def suite(browser,engine):
     ctx=browser.new_context(viewport={'width':390,'height':844},device_scale_factor=2,is_mobile=True,has_touch=True,service_workers='block')
     page=ctx.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
     try:
         page.goto(URL,wait_until='networkidle');page.wait_for_function("typeof S!=='undefined'")
-        check(engine+' release',page.evaluate("RELEASE==='20260908-video1'"))
+        check(engine+' release',page.evaluate("RELEASE==='20260908-guide1'"))
         check(engine+' first visit has warehouse even when SW is blocked',page.locator('#screenWarehouse').count()==1 and page.locator('#nav [data-go="warehouse"]').count()==1)
         check(engine+' no injected legacy art or warehouse scripts',page.locator('script[src*="item-art-levels"],script[src*="warehouse.js"]').count()==0)
         page.locator('#startGame').click();page.wait_for_timeout(150)
@@ -112,7 +112,7 @@ if __name__=='__main__':
     try:
         html=fetch('index.html').decode();check('warehouse is in origin HTML, not SW injection','id="screenWarehouse"' in html and 'id="openWarehouse"' in html)
         for name in ['index.html','game.js','item-art.js','youth.css','sw.js']:
-            check('published bytes match '+name,hashlib.sha256(fetch(name+'?v=video1')).digest()==hashlib.sha256((R/name).read_bytes()).digest())
+            check('published bytes match '+name,hashlib.sha256(fetch(name+'?v=guide1')).digest()==hashlib.sha256((R/name).read_bytes()).digest())
         with sync_playwright() as p:
             for engine in os.environ.get('BROWSERS','chromium,webkit').split(','):
                 opts={'headless':True}
@@ -123,5 +123,5 @@ if __name__=='__main__':
     except Exception as exc:
         RESULTS.append({'test':'atelier4 suite','result':'failed','error':str(exc)});raise
     finally:
-        (OUT/'report.json').write_text(json.dumps({'url':URL,'release':'20260908-video1','checks':RESULTS},ensure_ascii=False,indent=2))
+        (OUT/'report.json').write_text(json.dumps({'url':URL,'release':'20260908-guide1','checks':RESULTS},ensure_ascii=False,indent=2))
         print('Atelier4:',sum(x['result']=='passed' for x in RESULTS),'passed;',sum(x['result']=='failed' for x in RESULTS),'failed')

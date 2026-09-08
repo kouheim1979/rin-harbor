@@ -50,7 +50,7 @@ const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 
-const RELEASE='20260908-video1';
+const RELEASE='20260908-guide1';
 const BACKUP_KEY='rin_harbor_before_art_v1';
 const int=(v,lo=0,hi=1e9,fallback=0)=>Number.isFinite(Number(v))?Math.max(lo,Math.min(hi,Math.floor(Number(v)))):fallback;
 let hintTimer=null, comboTimer=null, albumIndex=0, albumReturnFocus=null, movieReturnFocus=null, movieStage=0, diskAvailable=true;
@@ -211,7 +211,7 @@ function completeOrder(i,auto=false){
 
 function autoDeliver(){let done=0;for(let guard=0;guard<12;guard++){const i=firstReadyOrder();if(i<0)break;completeOrder(i,true);done++}if(done){toast(`🤖 自動納品 ${done}件！`);celebrate(Math.min(14,done*4));sound('deliver');if(S.autoStory)autoOpenStory()}return done}
 
-function quickDeliver(){const i=firstReadyOrder();if(i>=0){completeOrder(i,false);renderAll();saveSoon()}else say('今は納品できる注文がないよ。')}
+function quickDeliver(){const o=nextGuideOrder(),i=S.orders.indexOf(o);if(i>=0&&orderCan(o)){completeOrder(i,false);renderAll();saveSoon()}else say('この注文の材料をそろえよう。')}
 
 function generatorTap(i){const id=S.board[i];if(!isGen(id))return;if(!emptyCells().length){say('ボードがいっぱいだよ。合成か売却をしてね。');haptic(40);return}makeUndo('材料');selected=null;hintPair=[];const made=weightedPick(ITEMS[id].p);addItem(made);S.stats.generated++;updateMission('generate',1);say(`${nameOf(made)} が出たよ。`);sound('pop');finishBoardAction()}
 
@@ -251,11 +251,100 @@ function sellSelected(){if(selected===null){say('売るアイテムを選んで�
 
 function findMergePair(){const map={};for(let i=0;i<S.board.length;i++){const id=S.board[i];if(!id||isGen(id)||!ITEMS[id].next)continue;if(map[id]!==undefined)return [map[id],i];map[id]=i}return null}
 
+// Guidance is session-only. Never add UI state to a player's save or consume inventory.
+let guidedOrder=null, recipeOrder=null, recipeItem=null, recipeReturnFocus=null;
+
+function orderGuidePlan(order){
+  const counts=countBoard(),needs={},spare={...counts},reserved={},used={},missing={};
+  if(!validOrder(order))return {needs,pairs:[],stored:[],sources:[],missingBase:0,merges:0};
+  for(const w of order.wants)needs[w.id]=(needs[w.id]||0)+w.n;
+  // Reserve every exact requirement first, including lower levels in the same chain.
+  for(const [id,n] of Object.entries(needs)){
+    reserved[id]=Math.min(counts[id]||0,n);spare[id]=(counts[id]||0)-reserved[id];
+  }
+  let missingBase=0,merges=0;
+  function supply(id,n){
+    const take=Math.min(spare[id]||0,n);
+    spare[id]=(spare[id]||0)-take;used[id]=(used[id]||0)+take;n-=take;
+    if(!n)return;
+    missing[id]=(missing[id]||0)+n;
+    if(levelOf(id)===1){missingBase+=n;return}
+    merges+=n;supply(ITEMS[id].k+(levelOf(id)-1),n*2);
+  }
+  Object.entries(needs).sort(([a],[b])=>levelOf(a)-levelOf(b)).forEach(([id,n])=>supply(id,n-reserved[id]));
+  const indices={},skip={...reserved};
+  S.board.forEach((id,i)=>{if(!id||isGen(id))return;if(skip[id]>0){skip[id]--;return}(indices[id]??=[]).push(i)});
+  const byLevel=(a,b)=>levelOf(b)-levelOf(a);
+  const pairs=Object.keys(used).filter(id=>used[id]>=2&&ITEMS[id].next).sort(byLevel).map(id=>indices[id].slice(0,2));
+  const stored=Object.keys(missing).filter(id=>S.warehouse[id]>0).sort(byLevel);
+  const kinds=new Set(Object.keys(missing).map(id=>ITEMS[id].k));
+  const sources=S.board.map((id,i)=>isGen(id)&&ITEMS[id].p.some(([item])=>kinds.has(ITEMS[item].k))?i:null).filter(i=>i!==null);
+  return {needs,pairs,stored,sources,missingBase,merges};
+}
+
+function nextGuideOrder(){
+  if(guidedOrder&&S.orders.includes(guidedOrder))return guidedOrder;
+  guidedOrder=null;
+  const ready=firstReadyOrder();if(ready>=0)return S.orders[ready];
+  let best=null,bestScore=Infinity;
+  for(const o of S.orders){
+    const plan=orderGuidePlan(o),score=plan.missingBase*4+plan.merges;
+    if(score<bestScore){best=o;bestScore=score}
+  }
+  return best;
+}
+
 function showHint(){
-  clearTimeout(hintTimer);const pair=findMergePair();
-  hintPair=pair||S.board.map((id,i)=>isGen(id)?i:null).filter(i=>i!==null);
-  say(pair?`${nameOf(S.board[pair[0]])}が2つ！ 光っているマスを重ねてね。`:emptyCells().length?'カフェか海辺のかごから材料を出してね。':'空きマスがないよ。注文を届けるか、いらない材料を売ってね。');
-  renderGame();hintTimer=setTimeout(()=>{hintPair=[];if(view==='game')renderGame()},2500);
+  clearTimeout(hintTimer);selected=null;hintPair=[];
+  const order=nextGuideOrder(),plan=orderGuidePlan(order),pair=plan.pairs[0];
+  if(order&&orderCan(order)){
+    const left={...plan.needs};
+    S.board.forEach((id,i)=>{if(left[id]>0){hintPair.push(i);left[id]--}});
+    say('注文がそろったよ！「お届け」で港のみんなへ。');
+  }else if(pair){
+    hintPair=pair;say(`${nameOf(S.board[pair[0]])}を2つ合成！ 注文に近づくよ。`);
+  }else if(!emptyCells().length){
+    // Free space without merging away an exact item reserved for this order.
+    const c=countBoard(),id=Object.keys(c).find(id=>ITEMS[id].next&&c[id]-(plan.needs[id]||0)>=2);
+    if(id){hintPair=S.board.map((v,i)=>v===id?i:null).filter(i=>i!==null).slice(-2);say(`${nameOf(id)}を2つ合成して、空きを作ろう。`)}
+    else say(warehouseUsed()<warehouseCapacity()?'盤面がいっぱい。アイテムを選んで「預ける」で空きを作ろう。':'盤面も倉庫もいっぱい。別の注文を届けるか、不要な品を売ろう。');
+  }else if(plan.stored.length){
+    say(`倉庫に${nameOf(plan.stored[0])}があるよ。取り出して使おう。`);
+  }else if(plan.sources.length){
+    hintPair=plan.sources;say('光る屋台で材料を集めよう。注文の絵を押すと、つくり方が見られるよ。');
+  }else say('この材料の屋台はまだないよ。物語を進めよう。');
+  renderGame();hintTimer=setTimeout(()=>{hintPair=[];if(view==='game')renderGame()},4000);
+}
+
+function openRecipe(id,orderIndex){
+  const order=S.orders[orderIndex];
+  if(!hasItem(id)||isGen(id)||!Number.isInteger(orderIndex)||!order?.wants.some(w=>w.id===id))return false;
+  recipeOrder=order;recipeItem=id;recipeReturnFocus=document.activeElement;
+  const c=countBoard(),plan=orderGuidePlan(order),kind=ITEMS[id].k,level=levelOf(id);
+  $('recipeTitle').textContent=nameOf(id)+'のつくり方';
+  $('recipeNeed').textContent=`この注文に${plan.needs[id]}こ ／ 盤面 ${c[id]||0}こ・倉庫 ${S.warehouse[id]||0}こ`;
+  $('recipeFormula').innerHTML=level>1?`${itemArt(kind+(level-1))}<span>＋</span>${itemArt(kind+(level-1))}<span>→</span>${itemArt(id)}`:itemArt(id);
+  $('recipeRule').textContent=level>1?`${nameOf(kind+(level-1))}を2つ重ねると、${nameOf(id)}になるよ。`:'屋台をタップして材料を出そう。何が出るかはお楽しみ。';
+  const sources=S.board.filter(g=>isGen(g)&&ITEMS[g].p.some(([item])=>ITEMS[item].k===kind));
+  $('recipeSource').textContent=sources.length?'材料が出る場所：'+sources.map(nameOf).join('・'):'物語を進めると、この材料の屋台が開くよ。';
+  $('recipeSteps').innerHTML=Array.from({length:level},(_,i)=>{
+    const item=kind+(i+1);
+    return `<li class="recipeStep">${itemArt(item)}<div><b>Lv${i+1} ${esc(nameOf(item))}</b><small>盤面 ${c[item]||0}こ ・ 倉庫 ${S.warehouse[item]||0}こ</small></div>${i<level-1?'<span class="recipeTimes">2こで次へ</span>':'<span class="recipeTimes">目標</span>'}</li>`;
+  }).join('');
+  $('recipeWarehouse').hidden=!Object.keys(S.warehouse).some(item=>ITEMS[item].k===kind&&levelOf(item)<=level);
+  $('recipeAuto').hidden=!guidedOrder;
+  $('recipeGuide').textContent=orderCan(order)?'この注文を届けに行く':'この注文を目標にする';
+  cancelDrag();$('recipeViewer').classList.add('on');$('recipeViewer').setAttribute('aria-hidden','false');
+  document.querySelector('.app').inert=true;$('nav').inert=true;
+  $('recipeBody').scrollTop=0;$('recipeClose').focus({preventScroll:true});return true;
+}
+
+function closeRecipe(restoreFocus=true){
+  const modal=$('recipeViewer');if(!modal.classList.contains('on'))return;
+  modal.classList.remove('on');modal.setAttribute('aria-hidden','true');
+  document.querySelector('.app').inert=false;$('nav').inert=false;
+  if(restoreFocus&&recipeReturnFocus?.isConnected)recipeReturnFocus.focus({preventScroll:true});
+  recipeReturnFocus=null;recipeOrder=null;recipeItem=null;
 }
 
 function autoOpenStory(){
@@ -323,7 +412,7 @@ function playRepairMovie(stage,openAlbumAfter=true){
 
 function setView(v){
   if(!['opening','home','game','orders','warehouse','story','book'].includes(v))v='home';
-  cancelDrag();view=v;document.body.dataset.view=v;selected=null;hintPair=[];
+  closeRecipe(false);cancelDrag();view=v;document.body.dataset.view=v;selected=null;hintPair=[];
   document.querySelectorAll('.screen').forEach(x=>x.classList.remove('on'));
   $('screen'+v[0].toUpperCase()+v.slice(1)).classList.add('on');
   $('nav').classList.toggle('hidden',v==='opening');
@@ -389,19 +478,17 @@ function renderGame(){
 }
 
 function renderNextOrder(){
-  const f=firstReadyOrder(),c=countBoard();
-  const score=o=>o.wants.reduce((a,w)=>a+Math.max(0,w.n-(c[w.id]||0))*Math.pow(2,levelOf(w.id)-1),0);
-  const o=f>=0?S.orders[f]:S.orders.reduce((best,x)=>!best||score(x)<score(best)?x:best,null);
-  $('quickTop').disabled=f<0;
-  $('nextOrderTitle').textContent=f>=0?'お届けの準備ができたよ':o?.title||'港の注文';
-  $('nextOrderSub').textContent=o?`報酬：${o.coin}コイン ＋ 星${o.star}`:'材料を合成しよう';
-  $('nextWants').innerHTML=o?o.wants.map(w=>`<span class="${(c[w.id]||0)>=w.n?'ok':''}">${itemArt(w.id)} ${esc(nameOf(w.id))} ${c[w.id]||0}/${w.n}</span>`).join(''):'';
+  const o=nextGuideOrder(),c=countBoard(),ready=!!o&&orderCan(o),index=S.orders.indexOf(o);
+  $('quickTop').disabled=!ready;
+  $('nextOrderTitle').textContent=ready?'お届けの準備ができたよ':(guidedOrder?'目標：':'')+(o?.title||'港の注文');
+  $('nextOrderSub').textContent=o?`${o.coin}コイン ＋ 星${o.star} ／ 絵でつくり方`:'材料を合成しよう';
+  $('nextWants').innerHTML=o?Object.entries(orderGuidePlan(o).needs).map(([id,n])=>`<button class="recipeChip ${(c[id]||0)>=n?'ok':''}" data-recipe="${id}" data-recipe-order="${index}" aria-label="${esc(nameOf(id))}のつくり方、盤面${c[id]||0}こ、必要${n}こ">${itemArt(id)}<span>${esc(nameOf(id))} ${c[id]||0}/${n}</span><span aria-hidden="true">?</span></button>`).join(''):'';
 }
 
 function renderOrders(){
   $('statsOrders').innerHTML=statsHtml();
   const c=countBoard();
-  $('orders').innerHTML=S.orders.map((o,i)=>`<div class="order ${orderCan(o)?'ready':''}"><div class="ot"><span>${esc(o.title)}</span><span>🪙${o.coin} ⭐${o.star}</span></div>${o.wants.map(w=>`<div class="want ${(c[w.id]||0)>=w.n?'ok':'ng'}"><span>${itemArt(w.id)} ${esc(nameOf(w.id))}</span><span>${c[w.id]||0}/${w.n}</span></div>`).join('')}<button class="${orderCan(o)?'primary':''}" data-order="${i}" ${orderCan(o)?'':'disabled'}>${orderCan(o)?'🚢 納品する':'まだ足りない'}</button></div>`).join('');
+  $('orders').innerHTML=S.orders.map((o,i)=>`<div class="order ${orderCan(o)?'ready':''}"><div class="ot"><span>${esc(o.title)}</span><span>🪙${o.coin} ⭐${o.star}</span></div>${o.wants.map(w=>`<button class="want recipeWant ${(c[w.id]||0)>=w.n?'ok':'ng'}" data-recipe="${w.id}" data-recipe-order="${i}" aria-label="${esc(nameOf(w.id))}のつくり方"><span>${itemArt(w.id)} ${esc(nameOf(w.id))}</span><span>${c[w.id]||0}/${w.n}<small>つくり方 ›</small></span></button>`).join('')}<button class="${orderCan(o)?'primary':''}" data-order="${i}" ${orderCan(o)?'':'disabled'}>${orderCan(o)?'🚢 納品する':'まだ足りない'}</button></div>`).join('');
 }
 
 function renderStory(){
@@ -574,6 +661,7 @@ $('board').addEventListener('keydown',e=>{
 document.body.addEventListener('click',e=>{
   const button=e.target.closest('button');if(button?.disabled)return;
   const go=e.target.closest('[data-go]');if(go){setView(go.dataset.go);return}
+  const recipe=e.target.closest('[data-recipe]');if(recipe){openRecipe(recipe.dataset.recipe,Number(recipe.dataset.recipeOrder));return}
   const take=e.target.closest('[data-take]');if(take){takeFromWarehouse(take.dataset.take);return}
   const filter=e.target.closest('[data-warehouse-filter]');if(filter){warehouseFilter=filter.dataset.warehouseFilter;renderWarehouse();return}
   const claim=e.target.closest('[data-claim]');if(claim){claimMission(Number(claim.dataset.claim));return}
@@ -596,6 +684,19 @@ bind('autoGame',()=>toggleSetting('auto'));bind('autoSetting',()=>toggleSetting(
 bind('autoStorySetting',()=>toggleSetting('autoStory'));bind('soundSetting',()=>toggleSetting('sound'));bind('hapticSetting',()=>toggleSetting('haptics'));
 bind('openWarehouse',()=>setView('warehouse'));bind('store',storeSelected);bind('warehouseUndo',undo);
 bind('hint',showHint);bind('undo',undo);bind('sort',sortBoard);bind('sell',sellSelected);
+bind('recipeClose',()=>closeRecipe());
+bind('recipeGuide',()=>{const order=recipeOrder;closeRecipe(false);guidedOrder=S.orders.includes(order)?order:null;setView('game');showHint();$('hint').focus({preventScroll:true})});
+bind('recipeWarehouse',()=>{const kind=ITEMS[recipeItem]?.k;closeRecipe(false);warehouseFilter=kind||'all';setView('warehouse')});
+bind('recipeAuto',()=>{closeRecipe(false);guidedOrder=null;setView('game');showHint();$('hint').focus({preventScroll:true})});
+$('recipeViewer').addEventListener('click',e=>{if(e.target===$('recipeViewer'))closeRecipe()});
+$('recipeViewer').addEventListener('keydown',e=>{
+  if(e.key==='Escape'){e.preventDefault();closeRecipe();return}
+  if(e.key==='Tab'){
+    const buttons=[...$('recipeViewer').querySelectorAll('button')].filter(b=>!b.hidden&&!b.disabled),first=buttons[0],last=buttons.at(-1);
+    if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus()}
+    else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus()}
+  }
+});
 bind('clear',()=>{selected=null;hintPair=[];renderGame();say('カフェや海辺のかごから材料を出してね。')});
 bind('repairBtn',repairShip);bind('openAlbum',()=>openAlbum(S.repair));bind('viewerClose',closeAlbum);bind('viewerMovie',()=>{const stage=albumIndex;closeAlbum();playRepairMovie(stage,true)});bind('movieSkip',()=>finishRepairMovie(true));
 $('viewer').addEventListener('click',e=>{if(e.target===$('viewer'))closeAlbum()});

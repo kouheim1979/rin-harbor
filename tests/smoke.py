@@ -56,7 +56,7 @@ def open_game(page, seed=None):
         page.add_init_script('('+init+')()')
         page.goto(URL,wait_until='networkidle')
     page.wait_for_function("typeof S!=='undefined' && S!==null && typeof RELEASE!=='undefined'")
-    check('correct release',page.evaluate('RELEASE')=='20260908-video1')
+    check('correct release',page.evaluate('RELEASE')=='20260908-guide1')
     page.wait_for_timeout(180)
 
 def reload_page(page):
@@ -104,6 +104,7 @@ def run_suite(browser, engine):
     check(engine+' move to empty tile',page.evaluate("S.board[7]===null&&S.board[9]==='drink1'"))
     tap(page,8);tap(page,0)
     check(engine+' generator while selected',page.evaluate("S.stats.generated===1&&selected===null"))
+    page.evaluate("S.orders[0]={title:'ヒント確認',wants:[{id:'drink2',n:1}],coin:26,star:1,xp:1};guidedOrder=S.orders[0];renderGame()")
     page.locator('#hint').click();check(engine+' hint highlights pair',page.locator('.cell.hint').count()==2)
     positions=page.evaluate("S.board.map((v,i)=>isGen(v)?i:null).filter(i=>i!==null)")
     page.locator('#sort').click()

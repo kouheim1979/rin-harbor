@@ -13,7 +13,7 @@
 <link rel="icon" type="image/png" sizes="512x512" href="assets/art-v1/icon-512.png">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="preload" as="image" href="assets/art-hd/hero.webp">
-<link rel="stylesheet" href="youth.css?v=video1">
+<link rel="stylesheet" href="youth.css?v=guide1">
 <!-- Replaces item-art-levels.js and warehouse.js. Features are integrated before startup. -->
 </head>
 <body data-view="opening">
@@ -166,7 +166,7 @@
       <div id="bookChains" class="bookChains"></div>
     </div>
     <div class="card">
-      <h2>設定・データ</h2><p id="storageStatus" class="tiny">この端末に自動保存しています。</p><p id="offlineStatus" class="tiny">オフラインの準備中…</p><button id="downloadSave">バックアップをファイルに保存</button><p class="tiny">バージョン 2026.09.08 Atelier 4</p>
+      <h2>設定・データ</h2><p id="storageStatus" class="tiny">この端末に自動保存しています。</p><p id="offlineStatus" class="tiny">オフラインの準備中…</p><button id="downloadSave">バックアップをファイルに保存</button><p class="tiny">バージョン 2026.09.08 Atelier 4 ・ つくり方ガイド</p>
       <div class="settings">
         <div class="setting"><div><b>自動納品</b><small>完成した注文を自動で届けます</small></div><button id="autoSetting" class="toggle"></button></div>
         <div class="setting"><div><b>物語を自動進行</b><small>星が足りたら次の話を開放します</small></div><button id="autoStorySetting" class="toggle"></button></div>
@@ -207,8 +207,22 @@
   </div>
 </div>
 
-<script src="item-art.js?v=video1"></script>
-<script src="game.js?v=video1"></script>
+<div id="recipeViewer" class="viewer recipeViewer" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="recipeTitle" aria-describedby="recipeNeed">
+  <div class="recipePanel">
+    <div class="recipeHead"><h2 id="recipeTitle">つくり方</h2><button id="recipeClose">閉じる</button></div>
+    <div id="recipeBody" class="recipeBody">
+      <p id="recipeNeed" class="recipeNeed"></p>
+      <div id="recipeFormula" class="recipeFormula" aria-hidden="true"></div>
+      <p id="recipeRule"></p><p id="recipeSource" class="recipeSource"></p>
+      <ol id="recipeSteps" class="recipeSteps" aria-label="合成の順番"></ol>
+      <button id="recipeWarehouse" class="good" hidden>この材料を倉庫で見る</button>
+    </div>
+    <div class="recipeFoot"><button id="recipeGuide" class="primary">この注文を目標にする</button><button id="recipeAuto" hidden>おまかせに戻す</button></div>
+  </div>
+</div>
+
+<script src="item-art.js?v=guide1"></script>
+<script src="game.js?v=guide1"></script>
 <noscript>遊ぶにはJavaScriptを有効にしてください。</noscript>
 </body>
 </html>
