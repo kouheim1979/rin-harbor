@@ -14,10 +14,13 @@ jobs:
     timeout-minutes: 18
     steps:
       - uses: actions/checkout@v4
-      - name: Set up test browsers
+      - name: Set up test browsers and movie verifier
         run: |
           python3 -m pip install playwright==1.57.0 Pillow==11.3.0
           python3 -m playwright install --with-deps chromium webkit
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          ffprobe -version | head -1
       - name: Check syntax, movie assets, and start local server
         run: |
           node --check game.js
