@@ -4,6 +4,7 @@ on:
     branches: [feat/video-rewards]
     paths:
       - 'scripts/add_video_rewards.py'
+      - 'scripts/patch_video_runtime.py'
       - 'scripts/patch_video_tests.py'
       - '.github/workflows/build-video-rewards.yml'
   workflow_dispatch:
@@ -27,6 +28,7 @@ jobs:
       - name: Build videos and integrate reward UI
         run: |
           python3 scripts/add_video_rewards.py
+          python3 scripts/patch_video_runtime.py
           python3 scripts/patch_video_tests.py
       - name: Syntax checks
         run: |
