@@ -104,8 +104,9 @@ def run_suite(browser, engine):
     check(engine+' move to empty tile',page.evaluate("S.board[7]===null&&S.board[9]==='drink1'"))
     tap(page,8);tap(page,0)
     check(engine+' generator while selected',page.evaluate("S.stats.generated===1&&selected===null"))
-    page.evaluate("S.orders[0]={title:'ヒント確認',wants:[{id:'drink2',n:1}],coin:26,star:1,xp:1};guidedOrder=S.orders[0];renderGame()")
-    page.locator('#hint').click();check(engine+' hint highlights pair',page.locator('.cell.hint').count()==2)
+    # Prior taps can leave a completed drink2; set up an actual missing-item pair.
+    page.evaluate("S.board[7]='drink1';S.board[8]='drink1';S.board[9]=null;S.orders[0]={title:'ヒント確認',wants:[{id:'drink2',n:1}],coin:26,star:1,xp:1};guidedOrder=S.orders[0];renderGame()")
+    page.locator('#hint').click();check(engine+' hint highlights pair',page.locator('.cell.hint').count()==2 and page.evaluate("hintPair.every(i=>S.board[i]==='drink1')"))
     positions=page.evaluate("S.board.map((v,i)=>isGen(v)?i:null).filter(i=>i!==null)")
     page.locator('#sort').click()
     check(engine+' sort keeps generators',positions==page.evaluate("S.board.map((v,i)=>isGen(v)?i:null).filter(i=>i!==null)"))
