@@ -15,7 +15,10 @@ def check(name,ok,detail=''):
     checks.append({'test':name,'result':'passed' if ok else 'failed','detail':detail})
     if not ok:raise AssertionError(name+': '+str(detail))
 
-def state(page):return page.evaluate('JSON.stringify(S)')
+def state(page):
+    # normalize() reorders discovery-map keys. Compare every saved value and
+    # array position exactly, without treating object property order as progress.
+    return json.dumps(page.evaluate('S'),sort_keys=True,ensure_ascii=False)
 
 def fixture(page):
     page.evaluate("""()=>{
