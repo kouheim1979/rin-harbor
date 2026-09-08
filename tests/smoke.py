@@ -150,6 +150,9 @@ def run_suite(browser, engine):
     fresh(page);page.evaluate("S.coins=1550;setView('home')")
     for stage in range(1,6):
         page.locator('#repairBtn').click();page.wait_for_selector('#movieViewer.on')
+        # Opening the dialog precedes HTMLMediaElement's asynchronous source
+        # selection. Require an actual decoded frame, not just a visible modal.
+        page.wait_for_function(f"repairMovie.readyState>=2 && repairMovie.videoWidth>0 && repairMovie.currentSrc.includes('repair-{stage}.mp4')",timeout=10000)
         check(engine+f' repair stage {stage}',page.evaluate('S.repair')==stage)
         check(engine+f' repair movie {stage}',page.evaluate(f"repairMovie.currentSrc.includes('repair-{stage}.mp4')"))
         # On a fast/public load the four-second reward may naturally finish before

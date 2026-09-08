@@ -131,6 +131,9 @@ def suite(browser_type):
             check(prefix+'recipe and art work after offline reload',page.locator('#recipeViewer.on .recipeStep .itemArt').count()==2)
             check(prefix+'offline guide preserves saved progress',state(page)==before)
         check(prefix+'no JavaScript errors',not errors,' | '.join(errors))
+    except Exception:
+        page.screenshot(path=str(OUT/(browser_type.name+'-failure.png')))
+        raise
     finally:
         ctx.close();browser.close()
 
