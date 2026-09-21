@@ -153,7 +153,7 @@ def run_suite(browser, engine):
     check(engine+' generator secret uses 20 second hold',page.evaluate('GENERATOR_SECRET_HOLD_MS===20000'))
     page.evaluate("openGeneratorSecret('gen_cafe',document.querySelector('.cell.gen'))")
     check(engine+' generator secret lists cafe outputs',page.locator('#generatorSecretOptions input').count()==2)
-    page.locator('#generatorSecretOptions input[value="drink1"]').check()
+    page.locator('#generatorSecretOptions input[value="drink1"]').evaluate("e=>{e.checked=true;e.dispatchEvent(new Event('change',{bubbles:true}))}")
     page.locator('#generatorSecretSave').click()
     check(engine+' generator secret stored separately',page.evaluate("JSON.parse(localStorage.getItem(GENERATOR_SECRET_KEY)).gen_cafe.join(',')==='drink1'&&!Object.hasOwn(S,'generatorSecret')"))
     page.evaluate("Math.random=()=>0.99")
