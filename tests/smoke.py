@@ -150,7 +150,7 @@ def run_suite(browser, engine):
     # Secret generator picker: normal tap remains unchanged; a 20-second hold can
     # restrict a generator to checked outputs without modifying the player save schema.
     fresh(page)
-    check(engine+' generator secret uses 20 second hold',page.evaluate('GENERATOR_SECRET_HOLD_MS===20000'))
+    check(engine+' generator secret uses 5 second hold',page.evaluate('GENERATOR_SECRET_HOLD_MS===5000'))
     page.evaluate("openGeneratorSecret('gen_cafe',document.querySelector('.cell.gen'))")
     check(engine+' generator secret lists cafe outputs',page.locator('#generatorSecretOptions input').count()==2)
     page.locator('#generatorSecretOptions input[value="drink1"]').evaluate("e=>{e.checked=true;e.dispatchEvent(new Event('change',{bubbles:true}))}")
@@ -235,6 +235,8 @@ def run_suite(browser, engine):
     # Restore test baseline after reload before the offline phase.
     page.evaluate("normalize({...freshState(),auto:false,autoStory:false,daily:S.daily});saveNow();setView('game')")
     page.wait_for_timeout(120)
+    viewport=page.locator('meta[name="viewport"]').get_attribute('content')
+    check(engine+' accidental page zoom disabled','maximum-scale=1' in viewport and 'user-scalable=no' in viewport,viewport)
     check(engine+' no page errors',not errors,' | '.join(errors))
     context.close()
 
