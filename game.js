@@ -4,7 +4,7 @@ const $=id=>document.getElementById(id);
 const GRID=36, MAX_ITEM_LEVEL=10, ORDER_TARGET=8, SAVE_KEY='rin_harbor_save_v10';
 const OLD_KEYS=['rin_harbor_save_v9','rin_harbor_save_v8','rin_harbor_save_v7','rin_harbor_save_v6','rin_harbor_save_v5'];
 let S=null, selected=null, view='opening', saveTimer=null, drag=null, undoState=null, undoLabel='', hintPair=[], combo=0, lastMergeAt=0, toastTimer=null, audioCtx=null;
-const GENERATOR_SECRET_KEY='rin_harbor_generator_secret_v1', GENERATOR_SECRET_HOLD_MS=20000;
+const GENERATOR_SECRET_KEY='rin_harbor_generator_secret_v1', GENERATOR_SECRET_HOLD_MS=5000;
 let generatorSecret={}, generatorSecretHold=null, generatorSecretId=null, generatorSecretReturnFocus=null;
 
 
