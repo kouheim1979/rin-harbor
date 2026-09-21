@@ -147,6 +147,23 @@ def run_suite(browser, engine):
     check(engine+' auto delivery on merge',page.evaluate("S.stats.delivered===1&&!S.board.includes('drink2')"))
     page.locator('#undo').click();check(engine+' undo auto transaction',before==state(page))
 
+    # Secret generator picker: normal tap remains unchanged; a 20-second hold can
+    # restrict a generator to checked outputs without modifying the player save schema.
+    fresh(page)
+    check(engine+' generator secret uses 20 second hold',page.evaluate('GENERATOR_SECRET_HOLD_MS===20000'))
+    page.evaluate("openGeneratorSecret('gen_cafe',document.querySelector('.cell.gen'))")
+    check(engine+' generator secret lists cafe outputs',page.locator('#generatorSecretOptions input').count()==2)
+    page.locator('#generatorSecretOptions input[value="drink1"]').check()
+    page.locator('#generatorSecretSave').click()
+    check(engine+' generator secret stored separately',page.evaluate("JSON.parse(localStorage.getItem(GENERATOR_SECRET_KEY)).gen_cafe.join(',')==='drink1'&&!Object.hasOwn(S,'generatorSecret')"))
+    page.evaluate("Math.random=()=>0.99")
+    before_count=page.evaluate("countBoard().drink1||0")
+    page.evaluate("generatorTap(S.board.indexOf('gen_cafe'))")
+    check(engine+' checked generator output is forced',page.evaluate("(countBoard().drink1||0)")==before_count+1)
+    page.evaluate("openGeneratorSecret('gen_cafe')")
+    page.locator('#generatorSecretReset').click();page.locator('#generatorSecretClose').click()
+    check(engine+' generator secret reset restores normal pool',page.evaluate("generatorPool('gen_cafe').length===ITEMS.gen_cafe.p.length&&!generatorSecret.gen_cafe"))
+
     fresh(page);page.evaluate("S.coins=1550;setView('home')")
     for stage in range(1,6):
         page.locator('#repairBtn').click();page.wait_for_selector('#movieViewer.on')
