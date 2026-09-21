@@ -692,8 +692,8 @@ $('board').addEventListener('pointerdown',e=>{
   if(isGen(id)){
     const timer=setTimeout(()=>{
       if(!generatorSecretHold||generatorSecretHold.pointerId!==e.pointerId)return;
-      const held=generatorSecretHold;generatorSecretHold=null;drag=null;
-      try{$('board').releasePointerCapture(e.pointerId)}catch(_e){}
+      const held=generatorSecretHold;generatorSecretHold=null;const pointerId=held.pointerId;drag=null;
+      try{$('board').releasePointerCapture(pointerId)}catch(_e){}
       openGeneratorSecret(id,$('board').querySelector(`[data-i="${held.from}"]`));haptic(40);
     },GENERATOR_SECRET_HOLD_MS);
     generatorSecretHold={pointerId:e.pointerId,from,x:e.clientX,y:e.clientY,timer};
