@@ -112,7 +112,7 @@ def suite(browser_type):
         page.evaluate("S.orders[0].wants=[{id:'drink10',n:1}];guidedOrder=S.orders[0];renderGame()")
         for width,height in [(320,568),(390,844),(844,390),(1280,800)]:
             page.set_viewport_size({'width':width,'height':height})
-            check(prefix+f'{width}x{height} order rail contained',page.evaluate("document.documentElement.scrollWidth<=innerWidth+1 and False") if False else page.evaluate("document.documentElement.scrollWidth<=innerWidth+1 && document.getElementById('screenGame').scrollWidth<=document.getElementById('screenGame').clientWidth+1"))
+            check(prefix+f'{width}x{height} order rail contained',page.evaluate("document.documentElement.scrollWidth<=innerWidth+1 && document.getElementById('screenGame').scrollWidth<=document.getElementById('screenGame').clientWidth+1"))
             page.locator('#nextWants [data-recipe="drink10"]').click()
             check(prefix+f'{width}x{height} ten-level recipe',page.locator('#recipeSteps .recipeStep').count()==10)
             for selector in ('#recipeClose','#recipeGuide'):
