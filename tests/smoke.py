@@ -235,6 +235,8 @@ def run_suite(browser, engine):
     # Restore test baseline after reload before the offline phase.
     page.evaluate("normalize({...freshState(),auto:false,autoStory:false,daily:S.daily});saveNow();setView('game')")
     page.wait_for_timeout(120)
+    viewport=page.locator('meta[name="viewport"]').get_attribute('content')
+    check(engine+' accidental page zoom disabled','maximum-scale=1' in viewport and 'user-scalable=no' in viewport,viewport)
     check(engine+' no page errors',not errors,' | '.join(errors))
     context.close()
 
