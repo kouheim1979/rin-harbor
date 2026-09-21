@@ -251,7 +251,7 @@ def run_offline(browser, engine):
     else:
         # WebKit route interception is not a true transport outage. A killed local origin is
         # exercised by tests/origin_offline.py against the same release instead.
-        check(engine+' offline shell cached',page.evaluate("caches.keys().then(k=>k.some(x=>x.includes(RELEASE)))"))
+        check(engine+' offline shell cached',page.evaluate("""async()=>{for(const name of await caches.keys()){if(!name.startsWith('rin-harbor-'))continue;const cache=await caches.open(name);const keys=(await cache.keys()).map(r=>r.url);if(keys.some(u=>u.includes('game.js?v=secretpicker2')))return true}return false}"""))
     check(engine+' save survives offline phase',page.evaluate("S.coins===4321&&S.book.fish3===1"))
     context.close()
 
