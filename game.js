@@ -4,6 +4,8 @@ const $=id=>document.getElementById(id);
 const GRID=36, MAX_ITEM_LEVEL=10, ORDER_TARGET=8, SAVE_KEY='rin_harbor_save_v10';
 const OLD_KEYS=['rin_harbor_save_v9','rin_harbor_save_v8','rin_harbor_save_v7','rin_harbor_save_v6','rin_harbor_save_v5'];
 let S=null, selected=null, view='opening', saveTimer=null, drag=null, undoState=null, undoLabel='', hintPair=[], combo=0, lastMergeAt=0, toastTimer=null, audioCtx=null;
+const GENERATOR_SECRET_KEY='rin_harbor_generator_secret_v1', GENERATOR_SECRET_HOLD_MS=20000;
+let generatorSecret={}, generatorSecretHold=null, generatorSecretId=null, generatorSecretReturnFocus=null;
 
 
 
@@ -213,7 +215,46 @@ function autoDeliver(){let done=0;for(let guard=0;guard<12;guard++){const i=firs
 
 function quickDeliver(){const o=nextGuideOrder(),i=S.orders.indexOf(o);if(i>=0&&orderCan(o)){completeOrder(i,false);renderAll();saveSoon()}else say('この注文の材料をそろえよう。')}
 
-function generatorTap(i){const id=S.board[i];if(!isGen(id))return;if(!emptyCells().length){say('ボードがいっぱいだよ。合成か売却をしてね。');haptic(40);return}makeUndo('材料');selected=null;hintPair=[];const made=weightedPick(ITEMS[id].p);addItem(made);S.stats.generated++;updateMission('generate',1);say(`${nameOf(made)} が出たよ。`);sound('pop');finishBoardAction()}
+function loadGeneratorSecret(){
+  try{
+    const raw=JSON.parse(localStorage.getItem(GENERATOR_SECRET_KEY)||'{}'),clean={};
+    for(const id of Object.keys(ITEMS).filter(isGen)){
+      const allowed=new Set(ITEMS[id].p.map(([item])=>item)),chosen=Array.isArray(raw[id])?raw[id].filter(item=>allowed.has(item)):[];
+      if(chosen.length)clean[id]=[...new Set(chosen)];
+    }
+    generatorSecret=clean;
+  }catch(_e){generatorSecret={}}
+}
+function saveGeneratorSecret(){try{localStorage.setItem(GENERATOR_SECRET_KEY,JSON.stringify(generatorSecret))}catch(_e){}}
+function generatorPool(id){const chosen=generatorSecret[id];return Array.isArray(chosen)&&chosen.length?ITEMS[id].p.filter(([item])=>chosen.includes(item)):ITEMS[id].p}
+function renderGeneratorSecret(){
+  const id=generatorSecretId;if(!isGen(id))return;
+  const selectedItems=new Set(generatorSecret[id]||[]);
+  $('generatorSecretTitle').textContent=nameOf(id)+' 裏設定';
+  $('generatorSecretOptions').innerHTML=ITEMS[id].p.map(([item])=>`<label class="generatorSecretOption"><input type="checkbox" value="${item}" ${selectedItems.has(item)?'checked':''}><span>${itemArt(item)}<b>${esc(nameOf(item))}</b></span></label>`).join('');
+  $('generatorSecretNote').textContent=selectedItems.size?'チェックしたものだけが出ます。':'未設定なので通常の確率で出ます。';
+}
+function openGeneratorSecret(id,trigger=document.activeElement){
+  if(!isGen(id))return false;cancelDrag();generatorSecretId=id;generatorSecretReturnFocus=trigger;renderGeneratorSecret();
+  $('generatorSecretViewer').classList.add('on');$('generatorSecretViewer').setAttribute('aria-hidden','false');document.querySelector('.app').inert=true;$('nav').inert=true;
+  $('generatorSecretClose').focus({preventScroll:true});return true;
+}
+function closeGeneratorSecret(restoreFocus=true){
+  const modal=$('generatorSecretViewer');if(!modal.classList.contains('on'))return;
+  modal.classList.remove('on');modal.setAttribute('aria-hidden','true');document.querySelector('.app').inert=false;$('nav').inert=false;
+  if(restoreFocus){const target=generatorSecretReturnFocus?.isConnected?generatorSecretReturnFocus:document.querySelector(`.cell.gen[data-i]`);target?.focus({preventScroll:true})}
+  generatorSecretId=null;generatorSecretReturnFocus=null;
+}
+function applyGeneratorSecret(){
+  if(!isGen(generatorSecretId))return;
+  const allowed=new Set(ITEMS[generatorSecretId].p.map(([item])=>item));
+  const chosen=[...$('generatorSecretOptions').querySelectorAll('input:checked')].map(x=>x.value).filter(x=>allowed.has(x));
+  if(chosen.length)generatorSecret[generatorSecretId]=chosen;else delete generatorSecret[generatorSecretId];
+  saveGeneratorSecret();closeGeneratorSecret();toast(chosen.length?'裏設定を保存しました':'通常の抽選に戻しました');
+}
+function resetGeneratorSecret(){if(isGen(generatorSecretId))delete generatorSecret[generatorSecretId];saveGeneratorSecret();renderGeneratorSecret()}
+function cancelGeneratorSecretHold(){if(generatorSecretHold?.timer)clearTimeout(generatorSecretHold.timer);generatorSecretHold=null}
+function generatorTap(i){const id=S.board[i];if(!isGen(id))return;if(!emptyCells().length){say('ボードがいっぱいだよ。合成か売却をしてね。');haptic(40);return}makeUndo('材料');selected=null;hintPair=[];const made=weightedPick(generatorPool(id));addItem(made);S.stats.generated++;updateMission('generate',1);say(`${nameOf(made)} が出たよ。`);sound('pop');finishBoardAction()}
 
 function cellTap(i){
   if(!Number.isInteger(i)||i<0||i>=GRID)return;
@@ -646,11 +687,23 @@ function markDrag(){
 }
 $('board').addEventListener('pointerdown',e=>{
   const cell=e.target.closest('.cell');if(!cell||e.isPrimary===false||e.button!==0||drag)return;
-  e.preventDefault();drag={from:Number(cell.dataset.i),pointerId:e.pointerId,x:e.clientX,y:e.clientY,active:false,target:null,ghost:null};
+  e.preventDefault();
+  const from=Number(cell.dataset.i),id=S.board[from];
+  if(isGen(id)){
+    const timer=setTimeout(()=>{
+      if(!generatorSecretHold||generatorSecretHold.pointerId!==e.pointerId)return;
+      const held=generatorSecretHold;generatorSecretHold=null;drag=null;
+      try{$('board').releasePointerCapture(e.pointerId)}catch(_e){}
+      openGeneratorSecret(id,$('board').querySelector(`[data-i="${held.from}"]`));haptic(40);
+    },GENERATOR_SECRET_HOLD_MS);
+    generatorSecretHold={pointerId:e.pointerId,from,x:e.clientX,y:e.clientY,timer};
+  }
+  drag={from,pointerId:e.pointerId,x:e.clientX,y:e.clientY,active:false,target:null,ghost:null};
   try{$('board').setPointerCapture(e.pointerId)}catch(_e){}
 },{passive:false});
 $('board').addEventListener('pointermove',e=>{
   if(!drag||drag.pointerId!==e.pointerId)return;e.preventDefault();
+  if(generatorSecretHold&&Math.hypot(e.clientX-generatorSecretHold.x,e.clientY-generatorSecretHold.y)>9)cancelGeneratorSecretHold();
   const id=S.board[drag.from];
   if(!drag.active&&id&&!isGen(id)&&Math.hypot(e.clientX-drag.x,e.clientY-drag.y)>9){
     drag.active=true;drag.ghost=document.createElement('div');drag.ghost.className='dragGhost';drag.ghost.innerHTML=itemArt(id);document.body.append(drag.ghost);
@@ -659,12 +712,12 @@ $('board').addEventListener('pointermove',e=>{
 },{passive:false});
 $('board').addEventListener('pointerup',e=>{
   if(!drag||drag.pointerId!==e.pointerId)return;e.preventDefault();
-  const state=drag,target=targetFromPoint(e.clientX,e.clientY),moved=Math.hypot(e.clientX-state.x,e.clientY-state.y)>9;cancelDrag();
+  const state=drag,target=targetFromPoint(e.clientX,e.clientY),moved=Math.hypot(e.clientX-state.x,e.clientY-state.y)>9;cancelGeneratorSecretHold();cancelDrag();
   if(state.active){if(target!==null&&target!==state.from)moveOrMerge(state.from,target)}
   else if(!moved&&target===state.from)cellTap(state.from);
 },{passive:false});
-$('board').addEventListener('pointercancel',cancelDrag);
-$('board').addEventListener('lostpointercapture',cancelDrag);
+$('board').addEventListener('pointercancel',()=>{cancelGeneratorSecretHold();cancelDrag()});
+$('board').addEventListener('lostpointercapture',()=>{cancelGeneratorSecretHold();cancelDrag()});
 $('board').addEventListener('click',e=>{const cell=e.target.closest('.cell');if(cell&&e.detail===0&&!e.pointerType)cellTap(Number(cell.dataset.i))});
 $('board').addEventListener('keydown',e=>{
   const cell=e.target.closest('.cell');if(!cell)return;const offsets={ArrowLeft:-1,ArrowRight:1,ArrowUp:-6,ArrowDown:6};
@@ -698,6 +751,10 @@ bind('autoGame',()=>toggleSetting('auto'));bind('autoSetting',()=>toggleSetting(
 bind('autoStorySetting',()=>toggleSetting('autoStory'));bind('soundSetting',()=>toggleSetting('sound'));bind('hapticSetting',()=>toggleSetting('haptics'));
 bind('openWarehouse',()=>setView('warehouse'));bind('store',storeSelected);bind('warehouseUndo',undo);
 bind('hint',showHint);bind('undo',undo);bind('sort',sortBoard);bind('sell',sellSelected);
+bind('generatorSecretClose',()=>closeGeneratorSecret());bind('generatorSecretSave',applyGeneratorSecret);bind('generatorSecretReset',resetGeneratorSecret);
+$('generatorSecretOptions').addEventListener('change',()=>{const n=$('generatorSecretOptions').querySelectorAll('input:checked').length;$('generatorSecretNote').textContent=n?'チェックしたものだけが出ます。':'チェックなしで保存すると通常の抽選に戻ります。'});
+$('generatorSecretViewer').addEventListener('click',e=>{if(e.target===$('generatorSecretViewer'))closeGeneratorSecret()});
+$('generatorSecretViewer').addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();closeGeneratorSecret()}});
 bind('recipeClose',()=>closeRecipe());
 bind('recipeGuide',()=>{const order=recipeOrder;closeRecipe(false);guidedOrder=S.orders.includes(order)?order:null;setView('game');showHint();$('hint').focus({preventScroll:true})});
 bind('recipeWarehouse',()=>{const kind=ITEMS[recipeItem]?.k;closeRecipe(false);warehouseFilter=kind||'all';setView('warehouse')});
@@ -731,11 +788,13 @@ $('openingImage').onload=()=>{$('openingFallback').hidden=true};
 $('openingImage').onerror=()=>{$('openingImage').style.display='none';$('openingFallback').hidden=false;$('openingFallback').textContent='港の絵を読み込めませんでした。再読み込みしてください。'};
 if($('openingVideo')){$('openingVideo').onerror=()=>{$('openingVideo').style.display='none'};if(reducedMotion())$('openingVideo').style.display='none';}
 if($('openingImage').complete&&$('openingImage').naturalWidth>0)$('openingImage').onload();
-window.addEventListener('pagehide',()=>{cancelDrag();saveNow()});
+window.addEventListener('pagehide',()=>{cancelGeneratorSecretHold();cancelDrag();saveNow()});
 document.addEventListener('visibilitychange',()=>{const video=$('openingVideo');if(document.visibilityState==='hidden'){cancelDrag();if(video)video.pause();saveNow()}else if(S){ensureDaily();renderAll();if(view==='opening'&&video&&!reducedMotion())video.play().catch(()=>{})}});
 window.addEventListener('resize',()=>requestAnimationFrame(fitBoard));
 if(window.visualViewport)visualViewport.addEventListener('resize',()=>requestAnimationFrame(fitBoard));
 if(window.ResizeObserver)new ResizeObserver(fitBoard).observe(document.querySelector('.boardBox'));
+
+loadGeneratorSecret();
 
 /* Integrated before load(): inventory is normalized before the first autosave. */
 function cleanWarehouse(raw, strict=false){
