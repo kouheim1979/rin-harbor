@@ -4,7 +4,7 @@ const PREFIX='rin-harbor-';
 const CACHE=PREFIX+VERSION;
 const ROOT=new URL('./',self.location.href);
 const url=p=>new URL(p,ROOT).href;
-const CORE=['index.html','youth.css?v=ordersrail1','item-art.js?v=guide1','game.js?v=ordersrail1','manifest.webmanifest','assets/art-hd/hero.webp',...Array.from({length:6},(_,i)=>`assets/art-hd/repair-${i}.webp`),...Array.from({length:6},(_,i)=>`assets/art-hd/thumb-${i}.webp`),'assets/art-v1/icon-180.png','assets/art-v1/icon-192.png','assets/art-v1/icon-512.png','assets/video/title-loop.mp4',...Array.from({length:5},(_,i)=>`assets/video/repair-${i+1}.mp4`)];
+const CORE=['index.html','youth.css?v=ordersrail2','item-art.js?v=guide1','game.js?v=ordersrail1','manifest.webmanifest','assets/art-hd/hero.webp',...Array.from({length:6},(_,i)=>`assets/art-hd/repair-${i}.webp`),...Array.from({length:6},(_,i)=>`assets/art-hd/thumb-${i}.webp`),'assets/art-v1/icon-180.png','assets/art-v1/icon-192.png','assets/art-v1/icon-512.png','assets/video/title-loop.mp4',...Array.from({length:5},(_,i)=>`assets/video/repair-${i+1}.mp4`)];
 
 async function cachedRangeResponse(cache,request){
  const range=request.headers.get('range');

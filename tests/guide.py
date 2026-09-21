@@ -46,6 +46,14 @@ def suite(browser_type):
         page.wait_for_function("typeof RELEASE!=='undefined'&&RELEASE==='20260908-guide1'")
         fixture(page)
         before=state(page)
+        rail=page.locator('#nextWants')
+        check(prefix+'all eight orders rendered in horizontal rail',rail.locator('.gameOrderMini').count()==8)
+        metrics=rail.evaluate("e=>({client:e.clientWidth,scroll:e.scrollWidth,overflow:getComputedStyle(e).overflowX})")
+        check(prefix+'order rail owns horizontal overflow',metrics['scroll']>metrics['client'] and metrics['overflow'] in ('auto','scroll'),metrics)
+        rail.evaluate("e=>{e.scrollLeft=e.scrollWidth}")
+        page.wait_for_timeout(80)
+        check(prefix+'last order reachable by horizontal scroll',rail.evaluate("""e=>{const last=e.lastElementChild;if(!last)return false;const a=e.getBoundingClientRect(),b=last.getBoundingClientRect();return e.scrollLeft>0&&b.left>=a.left-1&&b.right<=a.right+1}"""))
+        check(prefix+'order rail does not widen game screen',page.evaluate("document.getElementById('screenGame').scrollWidth<=document.getElementById('screenGame').clientWidth+1"))
         chip=page.locator('#nextWants [data-recipe="shell2"]')
         check(prefix+'closest order selected from real ingredients',chip.count()==1)
         chip.click()
@@ -104,6 +112,7 @@ def suite(browser_type):
         page.evaluate("S.orders[0].wants=[{id:'drink10',n:1}];guidedOrder=S.orders[0];renderGame()")
         for width,height in [(320,568),(390,844),(844,390),(1280,800)]:
             page.set_viewport_size({'width':width,'height':height})
+            check(prefix+f'{width}x{height} order rail contained',page.evaluate("document.documentElement.scrollWidth<=innerWidth+1 && document.getElementById('screenGame').scrollWidth<=document.getElementById('screenGame').clientWidth+1"))
             page.locator('#nextWants [data-recipe="drink10"]').click()
             check(prefix+f'{width}x{height} ten-level recipe',page.locator('#recipeSteps .recipeStep').count()==10)
             for selector in ('#recipeClose','#recipeGuide'):

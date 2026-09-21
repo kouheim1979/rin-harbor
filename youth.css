@@ -94,7 +94,11 @@ body[data-view='opening'] .app{max-width:1200px;padding:0}.openingHero{position:
 
 
 /* Atelier order rail: all 8 requests stay visible by horizontal swipe. */
+.orderStrip>div:nth-child(2){min-width:0}
 #nextWants.wantMini{
+  width:100%;
+  max-width:100%;
+  min-width:0;
   display:flex;
   flex-wrap:nowrap;
   gap:7px;
