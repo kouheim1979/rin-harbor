@@ -149,3 +149,16 @@ body[data-view='opening'] .app{max-width:1200px;padding:0}.openingHero{position:
 @media(orientation:landscape) and (max-height:540px){
   .gameOrderMini{flex-basis:160px;min-width:160px}
 }
+
+/* Secret generator picker: intentionally undiscoverable except by a 20-second generator hold. */
+.generatorSecretViewer{z-index:280}
+.generatorSecretPanel{width:min(100%,480px);max-height:100%;overflow:auto;border-radius:23px;background:var(--cream);padding:16px;box-shadow:0 20px 70px #103f5040}
+.generatorSecretLead{font-size:13px;color:var(--muted);line-height:1.65}
+.generatorSecretOptions{display:grid;gap:9px;margin:12px 0}
+.generatorSecretOption{display:block}
+.generatorSecretOption input{position:absolute;opacity:0;pointer-events:none}
+.generatorSecretOption>span{display:flex;align-items:center;gap:11px;min-height:58px;padding:8px 12px;border:2px solid #d6e7df;border-radius:14px;background:#fffef9}
+.generatorSecretOption input:checked+span{border-color:#168d8b;background:#e4f3eb;box-shadow:0 0 0 2px #168d8b22}
+.generatorSecretOption input:checked+span::after{content:'✓';margin-left:auto;font-size:20px;color:#087c79;font-weight:900}
+.generatorSecretOption .itemArt{width:42px;height:42px;flex:none}
+.generatorSecretActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
