@@ -484,11 +484,19 @@ function renderGame(){
 }
 
 function renderNextOrder(){
-  const o=nextGuideOrder(),c=countBoard(),ready=!!o&&orderCan(o),index=S.orders.indexOf(o);
+  const rail=$('nextWants'),previousScroll=rail?.scrollLeft||0;
+  const o=nextGuideOrder(),c=countBoard(),ready=!!o&&orderCan(o);
   $('quickTop').disabled=!ready;
-  $('nextOrderTitle').textContent=ready?'お届けの準備ができたよ':(guidedOrder?'目標：':'')+(o?.title||'港の注文');
-  $('nextOrderSub').textContent=o?`${o.coin}コイン ＋ 星${o.star} ／ 絵でつくり方`:'材料を合成しよう';
-  $('nextWants').innerHTML=o?Object.entries(orderGuidePlan(o).needs).map(([id,n])=>`<button class="recipeChip ${(c[id]||0)>=n?'ok':''}" data-recipe="${id}" data-recipe-order="${index}" aria-label="${esc(nameOf(id))}のつくり方、盤面${c[id]||0}こ、必要${n}こ">${itemArt(id)}<span>${esc(nameOf(id))} ${c[id]||0}/${n}</span><span aria-hidden="true">?</span></button>`).join(''):'';
+  $('nextOrderTitle').textContent=`注文 ${S.orders.length}件｜横にスワイプ`;
+  $('nextOrderSub').textContent=o?`${guidedOrder?'目標':'次'}：${o.title} ／ 🪙${o.coin} ⭐${o.star}`:'材料を合成しよう';
+  rail.innerHTML=S.orders.map((order,i)=>{
+    const needs=Object.entries(orderGuidePlan(order).needs),isReady=orderCan(order);
+    return `<div class="gameOrderMini ${isReady?'ready':''} ${order===o?'focus':''} ${guidedOrder===order?'target':''}" aria-label="${esc(order.title)}、報酬${order.coin}コイン、星${order.star}">
+      <div class="gameOrderMiniHead"><b>${i+1}. ${esc(order.title)}</b><small>🪙${order.coin} ⭐${order.star}</small></div>
+      <div class="gameOrderMiniNeeds">${needs.map(([id,n])=>`<button class="recipeChip ${(c[id]||0)>=n?'ok':''}" data-recipe="${id}" data-recipe-order="${i}" aria-label="${esc(nameOf(id))}のつくり方、盤面${c[id]||0}こ、必要${n}こ">${itemArt(id)}<span>${esc(nameOf(id))} ${c[id]||0}/${n}</span><span aria-hidden="true">?</span></button>`).join('')}</div>
+    </div>`;
+  }).join('');
+  requestAnimationFrame(()=>{const next=$('nextWants');if(next)next.scrollLeft=Math.min(previousScroll,Math.max(0,next.scrollWidth-next.clientWidth));});
 }
 
 function renderOrders(){
