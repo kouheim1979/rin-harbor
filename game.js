@@ -2,6 +2,9 @@
 
 const $=id=>document.getElementById(id);
 const GRID=36, MAX_ITEM_LEVEL=10, ORDER_TARGET=8, SAVE_KEY='rin_harbor_save_v10';
+// GRID is the legacy/new-game default; live capacity comes from S.board.length.
+const BOARD_SIDES=Object.freeze([4,5,6,7,8]);
+const BUILD='20260922-board-size1';
 const OLD_KEYS=['rin_harbor_save_v9','rin_harbor_save_v8','rin_harbor_save_v7','rin_harbor_save_v6','rin_harbor_save_v5'];
 let S=null, selected=null, view='opening', saveTimer=null, drag=null, undoState=null, undoLabel='', hintPair=[], combo=0, lastMergeAt=0, toastTimer=null, audioCtx=null;
 const GENERATOR_SECRET_KEY='rin_harbor_generator_secret_v1', GENERATOR_SECRET_HOLD_MS=5000;
@@ -59,6 +62,38 @@ let hintTimer=null, comboTimer=null, albumIndex=0, albumReturnFocus=null, movieR
 const reducedMotion=()=>window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 
+// The board array itself records its dimensions, so old 36-cell saves keep
+// their exact schema. Load, undo and import must all accept the same sizes.
+function supportedBoard(board){return Array.isArray(board)&&BOARD_SIDES.includes(Math.sqrt(board.length))}
+function boardSide(){return Math.sqrt(S.board.length)}
+function boardResizeError(side){
+  if(!BOARD_SIDES.includes(side))return 'このマス数は選べません。';
+  const used=S.board.filter(Boolean).length;
+  return used>side*side?`屋台とアイテムが${used}こあります。${side*side}マスにするには、先に${used-side*side}こ分の空きを作ってね。`:'';
+}
+function resizeBoard(side){
+  const error=boardResizeError(side);
+  if(error){$('generatorBoardNote').textContent=error;return false}
+  const capacity=side*side;if(capacity===S.board.length)return true;
+  // Keep all surviving positions. Move only items outside a smaller board into
+  // its free cells; never sell, consume or silently transfer anything.
+  const next=S.board.slice(0,capacity),overflow=S.board.slice(capacity).filter(Boolean);
+  while(next.length<capacity)next.push(null);
+  let j=0;for(let i=0;i<next.length&&j<overflow.length;i++)if(!next[i])next[i]=overflow[j++];
+  makeUndo('マス数の変更');
+  try{if(!localStorage.getItem('rin_harbor_before_board_resize_v1'))localStorage.setItem('rin_harbor_before_board_resize_v1',JSON.stringify(S))}catch(_e){}
+  cancelDrag();clearTimeout(hintTimer);clearTimeout(comboTimer);
+  selected=null;hintPair=[];combo=0;lastMergeAt=0;
+  S.board=next;renderAll();saveNow();
+  say(`盤面を${side}×${side}の${capacity}マスに変更したよ。「戻す」で変更前に戻せます。`);
+  return true;
+}
+function updateBoardSizeNote(){
+  const side=Number($('generatorBoardSize').value),error=boardResizeError(side);
+  $('generatorBoardNote').textContent=error||`現在${S.board.length}マス → ${side*side}マス。${side>6?'マスが小さく表示されます。':'アイテムはそのまま残ります。'}`;
+  $('generatorSecretSave').disabled=!!error;
+}
+
 function initialBoard(){
   const b=Array(GRID).fill(null);
   b[0]='gen_cafe';b[5]='gen_sea';b[7]='drink1';b[8]='drink1';b[13]='dessert1';b[14]='shell1';
@@ -81,7 +116,7 @@ function loadRaw(){
     try{
       const raw=localStorage.getItem(key); if(!raw)continue;
       const value=JSON.parse(raw);
-      if(!value||!Array.isArray(value.board)||value.board.length!==GRID)continue;
+      if(!value||!supportedBoard(value.board))continue;
       try{if(!localStorage.getItem(BACKUP_KEY))localStorage.setItem(BACKUP_KEY,raw)}catch(_e){}
       try{if(!localStorage.getItem('rin_harbor_before_warehouse_v4'))localStorage.setItem('rin_harbor_before_warehouse_v4',raw)}catch(_e){}
       return value;
@@ -93,7 +128,7 @@ function loadRaw(){
 function normalize(raw){
   const base=freshState(),src=raw&&typeof raw==='object'?raw:{};
   S={...base};
-  S.board=Array.isArray(src.board)&&src.board.length===GRID?src.board.map(id=>hasItem(id)?id:null):base.board;
+  S.board=supportedBoard(src.board)?src.board.map(id=>hasItem(id)?id:null):base.board;
   S.coins=int(src.coins,0,1e12,base.coins);S.stars=int(src.stars,0,1e9,0);
   S.level=int(src.level,1,100000,1);S.xp=int(src.xp,0,10000000,0);
   S.story=int(src.story,0,STORIES.length-1);S.repair=int(src.repair,0,5);
@@ -233,6 +268,8 @@ function renderGeneratorSecret(){
   $('generatorSecretTitle').textContent=nameOf(id)+' 裏設定';
   $('generatorSecretOptions').innerHTML=ITEMS[id].p.map(([item])=>`<label class="generatorSecretOption"><input type="checkbox" value="${item}" ${selectedItems.has(item)?'checked':''}><span>${itemArt(item)}<b>${esc(nameOf(item))}</b></span></label>`).join('');
   $('generatorSecretNote').textContent=selectedItems.size?'チェックしたものだけが出ます。':'未設定なので通常の確率で出ます。';
+  $('generatorBoardSize').innerHTML=BOARD_SIDES.map(side=>`<option value="${side}">${side}×${side}（${side*side}マス）${side===6?'・標準':''}</option>`).join('');
+  $('generatorBoardSize').value=String(boardSide());updateBoardSizeNote();
 }
 function openGeneratorSecret(id,trigger=document.activeElement){
   if(!isGen(id))return false;cancelDrag();generatorSecretId=id;generatorSecretReturnFocus=trigger;renderGeneratorSecret();
@@ -242,22 +279,23 @@ function openGeneratorSecret(id,trigger=document.activeElement){
 function closeGeneratorSecret(restoreFocus=true){
   const modal=$('generatorSecretViewer');if(!modal.classList.contains('on'))return;
   modal.classList.remove('on');modal.setAttribute('aria-hidden','true');document.querySelector('.app').inert=false;$('nav').inert=false;
-  if(restoreFocus){const target=generatorSecretReturnFocus?.isConnected?generatorSecretReturnFocus:document.querySelector(`.cell.gen[data-i]`);target?.focus({preventScroll:true})}
+  if(restoreFocus){const target=generatorSecretReturnFocus?.isConnected?generatorSecretReturnFocus:$('board').querySelector(`[data-i="${S.board.indexOf(generatorSecretId)}"]`);target?.focus({preventScroll:true})}
   generatorSecretId=null;generatorSecretReturnFocus=null;
 }
 function applyGeneratorSecret(){
   if(!isGen(generatorSecretId))return;
+  if(!resizeBoard(Number($('generatorBoardSize').value)))return;
   const allowed=new Set(ITEMS[generatorSecretId].p.map(([item])=>item));
   const chosen=[...$('generatorSecretOptions').querySelectorAll('input:checked')].map(x=>x.value).filter(x=>allowed.has(x));
   if(chosen.length)generatorSecret[generatorSecretId]=chosen;else delete generatorSecret[generatorSecretId];
-  saveGeneratorSecret();closeGeneratorSecret();toast(chosen.length?'裏設定を保存しました':'通常の抽選に戻しました');
+  saveGeneratorSecret();closeGeneratorSecret();toast(diskAvailable?'裏設定を保存しました':'変更しましたが端末に保存できません。バックアップを保存してください。');
 }
-function resetGeneratorSecret(){if(isGen(generatorSecretId))delete generatorSecret[generatorSecretId];saveGeneratorSecret();renderGeneratorSecret()}
+function resetGeneratorSecret(){const side=$('generatorBoardSize').value;if(isGen(generatorSecretId))delete generatorSecret[generatorSecretId];saveGeneratorSecret();renderGeneratorSecret();$('generatorBoardSize').value=side;updateBoardSizeNote()}
 function cancelGeneratorSecretHold(){if(generatorSecretHold?.timer)clearTimeout(generatorSecretHold.timer);generatorSecretHold=null}
 function generatorTap(i){const id=S.board[i];if(!isGen(id))return;if(!emptyCells().length){say('ボードがいっぱいだよ。合成か売却をしてね。');haptic(40);return}makeUndo('材料');selected=null;hintPair=[];const made=weightedPick(generatorPool(id));addItem(made);S.stats.generated++;updateMission('generate',1);say(`${nameOf(made)} が出たよ。`);sound('pop');finishBoardAction()}
 
 function cellTap(i){
-  if(!Number.isInteger(i)||i<0||i>=GRID)return;
+  if(!Number.isInteger(i)||i<0||i>=S.board.length)return;
   const id=S.board[i];
   if(isGen(id)){generatorTap(i);return}
   if(selected!==null&&!S.board[selected])selected=null;
@@ -268,7 +306,7 @@ function cellTap(i){
 }
 
 function moveOrMerge(a,b){
-  if(!Number.isInteger(a)||!Number.isInteger(b)||a<0||b<0||a>=GRID||b>=GRID)return;
+  if(!Number.isInteger(a)||!Number.isInteger(b)||a<0||b<0||a>=S.board.length||b>=S.board.length)return;
   const x=S.board[a],y=S.board[b];if(!x)return;if(isGen(x)){selected=null;say('屋台は固定だよ。');renderGame();return}if(a===b){selected=null;renderGame();return}
   if(!y){makeUndo('移動');S.board[b]=x;S.board[a]=null;selected=b;hintPair=[];renderGame();saveSoon();return}
   if(isGen(y)){say('屋台とは合成できないよ。');return}
@@ -284,7 +322,7 @@ function finishBoardAction(){restoreGenerators();ensureOrders();if(S.auto)autoDe
 
 function sortBoard(){
   makeUndo('整列');const items=S.board.filter(id=>id&&!isGen(id)).sort((x,y)=>ITEMS[x].k.localeCompare(ITEMS[y].k)||levelOf(x)-levelOf(y));
-  S.board=S.board.map(id=>isGen(id)?id:null);let j=0;for(let i=0;i<GRID;i++)if(!S.board[i]&&j<items.length)S.board[i]=items[j++];
+  S.board=S.board.map(id=>isGen(id)?id:null);let j=0;for(let i=0;i<S.board.length;i++)if(!S.board[i]&&j<items.length)S.board[i]=items[j++];
   selected=null;hintPair=[];renderGame();saveSoon();say('同じ仲間どうしに整列したよ。');
 }
 
@@ -459,7 +497,7 @@ function playRepairMovie(stage,openAlbumAfter=true){
 
 function setView(v){
   if(!['opening','home','game','orders','warehouse','story','book'].includes(v))v='home';
-  closeRecipe(false);cancelDrag();view=v;document.body.dataset.view=v;selected=null;hintPair=[];
+  closeGeneratorSecret(false);closeRecipe(false);cancelDrag();view=v;document.body.dataset.view=v;selected=null;hintPair=[];
   document.querySelectorAll('.screen').forEach(x=>x.classList.remove('on'));
   $('screen'+v[0].toUpperCase()+v.slice(1)).classList.add('on');
   $('nav').classList.toggle('hidden',v==='opening');
@@ -514,6 +552,9 @@ function renderDaily(){
 function renderGame(){
   ensureOrders();const focused=document.activeElement?.closest?.('.cell')?.dataset.i;
   $('miniStats').innerHTML=miniStatsHtml();$('gameXp').style.width=Math.min(100,S.xp/xpThreshold()*100)+'%';
+  const side=boardSide();
+  $('board').style.setProperty('--board-side',side);$('board').dataset.side=side;
+  $('board').setAttribute('aria-label',`合成ボード・${side}行${side}列、${S.board.length}マス`);
   $('board').innerHTML=S.board.map((id,i)=>{
     const cls=['cell',!id?'empty':'',id&&isGen(id)?'gen':'',selected===i?'sel':'',hintPair.includes(i)?'hint':'',selected!==null&&i!==selected&&id&&id===S.board[selected]&&ITEMS[id].next?'matchable':''].filter(Boolean).join(' ');
     return `<button class="${cls}" data-i="${i}" aria-label="${id?esc(nameOf(id))+' レベル'+levelOf(id):'空きマス '+(i+1)}">${id?`<div class="em">${itemArt(id)}</div><div class="nm">${esc(nameOf(id))}</div>${isGen(id)?'<div class="tap">材料</div>':`<div class="lv">Lv${levelOf(id)}</div>`}`:''}</button>`;
@@ -635,7 +676,7 @@ function importSave(){
   try{
     if(code.length>2000000)throw Error('too large');
     const text=code.trim().startsWith('{')?code:new TextDecoder('utf-8',{fatal:true}).decode(Uint8Array.from(atob(code.trim().replace(/^RH10-/,'')),c=>c.charCodeAt(0)));
-    const value=JSON.parse(text);if(!value||!Array.isArray(value.board)||value.board.length!==GRID||value.board.some(id=>id!==null&&!hasItem(id)))throw Error('invalid');
+    const value=JSON.parse(text);if(!value||!supportedBoard(value.board)||value.board.some(id=>id!==null&&!hasItem(id)))throw Error('invalid');
     cleanWarehouse(value.warehouse,true);
     if(!confirm('現在の進行状況を、このバックアップで置き換えますか？'))return;
     const old=JSON.stringify(S);normalize(value);undoState=old;undoLabel='復元';selected=null;renderAll();saveNow();toast('バックアップを復元しました');
@@ -660,7 +701,7 @@ function mergeEffect(i){
 function fitBoard(){
   if(view!=='game')return;const box=document.querySelector('.boardBox');
   const size=Math.max(1,Math.floor(Math.min(box.clientWidth,box.clientHeight,540)));
-  $('board').style.width=size+'px';$('board').style.height=size+'px';$('board').style.setProperty('--piece-size',Math.max(14,Math.min(39,size*.085))+'px');
+  $('board').style.width=size+'px';$('board').style.height=size+'px';$('board').style.setProperty('--piece-size',Math.max(10,Math.min(39,size*.085*6/boardSide()))+'px');
 }
 function closeAlbum(){
   const viewer=$('viewer');if(!viewer)return;viewer.classList.remove('on');viewer.setAttribute('aria-hidden','true');document.querySelector('.app').inert=false;$('nav').inert=false;
@@ -674,6 +715,7 @@ function downloadSave(){
 
 /* Pointer, keyboard and screen-reader input share the same game actions. */
 function cancelDrag(){
+  cancelGeneratorSecretHold();
   if(drag?.ghost)drag.ghost.remove();drag=null;
   document.querySelectorAll('.dragSource,.dropTarget').forEach(e=>e.classList.remove('dragSource','dropTarget'));
 }
@@ -692,6 +734,7 @@ $('board').addEventListener('pointerdown',e=>{
   if(isGen(id)){
     const timer=setTimeout(()=>{
       if(!generatorSecretHold||generatorSecretHold.pointerId!==e.pointerId)return;
+      if(view!=='game'||S.board[generatorSecretHold.from]!==id){cancelDrag();return}
       const held=generatorSecretHold;generatorSecretHold=null;const pointerId=held.pointerId;drag=null;
       try{$('board').releasePointerCapture(pointerId)}catch(_e){}
       openGeneratorSecret(id,$('board').querySelector(`[data-i="${held.from}"]`));haptic(40);
@@ -720,8 +763,9 @@ $('board').addEventListener('pointercancel',()=>{cancelGeneratorSecretHold();can
 $('board').addEventListener('lostpointercapture',()=>{cancelGeneratorSecretHold();cancelDrag()});
 $('board').addEventListener('click',e=>{const cell=e.target.closest('.cell');if(cell&&e.detail===0&&!e.pointerType)cellTap(Number(cell.dataset.i))});
 $('board').addEventListener('keydown',e=>{
-  const cell=e.target.closest('.cell');if(!cell)return;const offsets={ArrowLeft:-1,ArrowRight:1,ArrowUp:-6,ArrowDown:6};
-  if(e.key in offsets){e.preventDefault();const n=Math.max(0,Math.min(35,Number(cell.dataset.i)+offsets[e.key]));$('board').querySelector(`[data-i="${n}"]`)?.focus()}
+  const cell=e.target.closest('.cell');if(!cell)return;const side=boardSide(),i=Number(cell.dataset.i);
+  const offsets={ArrowLeft:i%side===0?0:-1,ArrowRight:i%side===side-1?0:1,ArrowUp:-side,ArrowDown:side};
+  if(e.key in offsets){e.preventDefault();const n=i+offsets[e.key];if(n>=0&&n<S.board.length)$('board').querySelector(`[data-i="${n}"]`)?.focus()}
   if(e.key==='Escape'){selected=null;renderGame()}
 });
 
@@ -754,7 +798,15 @@ bind('hint',showHint);bind('undo',undo);bind('sort',sortBoard);bind('sell',sellS
 bind('generatorSecretClose',()=>closeGeneratorSecret());bind('generatorSecretSave',applyGeneratorSecret);bind('generatorSecretReset',resetGeneratorSecret);
 $('generatorSecretOptions').addEventListener('change',()=>{const n=$('generatorSecretOptions').querySelectorAll('input:checked').length;$('generatorSecretNote').textContent=n?'チェックしたものだけが出ます。':'チェックなしで保存すると通常の抽選に戻ります。'});
 $('generatorSecretViewer').addEventListener('click',e=>{if(e.target===$('generatorSecretViewer'))closeGeneratorSecret()});
-$('generatorSecretViewer').addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();closeGeneratorSecret()}});
+$('generatorBoardSize').addEventListener('change',updateBoardSizeNote);
+$('generatorSecretViewer').addEventListener('keydown',e=>{
+  if(e.key==='Escape'){e.preventDefault();closeGeneratorSecret();return}
+  if(e.key==='Tab'){
+    const controls=[...$('generatorSecretViewer').querySelectorAll('button,input,select')].filter(el=>!el.disabled&&!el.hidden),first=controls[0],last=controls.at(-1);
+    if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus()}
+    else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus()}
+  }
+});
 bind('recipeClose',()=>closeRecipe());
 bind('recipeGuide',()=>{const order=recipeOrder;closeRecipe(false);guidedOrder=S.orders.includes(order)?order:null;setView('game');showHint();$('hint').focus({preventScroll:true})});
 bind('recipeWarehouse',()=>{const kind=ITEMS[recipeItem]?.k;closeRecipe(false);warehouseFilter=kind||'all';setView('warehouse')});
@@ -869,7 +921,7 @@ async function registerOffline(){
     const registration=await navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'});
     registration.update().catch(()=>{});
     const ready=await navigator.serviceWorker.ready;
-    const channel=new MessageChannel();channel.port1.onmessage=e=>{if(e.data?.version===RELEASE)status.textContent='絵もゲームも保存済み。通信なしで遊べます。'};
+    const channel=new MessageChannel();channel.port1.onmessage=e=>{if(e.data?.version===BUILD)status.textContent='絵もゲームも保存済み。通信なしで遊べます。'};
     ready.active?.postMessage({type:'READY'},[channel.port2]);
     navigator.serviceWorker.addEventListener('controllerchange',()=>{status.textContent='新しいバージョンを保存しました。次回も続きから遊べます。'});
   }catch(_e){status.textContent='オフライン保存は未完了です。接続中はそのまま遊べます。'}
