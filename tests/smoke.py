@@ -147,20 +147,20 @@ def run_suite(browser, engine):
     check(engine+' auto delivery on merge',page.evaluate("S.stats.delivered===1&&!S.board.includes('drink2')"))
     page.locator('#undo').click();check(engine+' undo auto transaction',before==state(page))
 
-    # Secret generator picker: normal tap remains unchanged; a 20-second hold can
+    # Secret generator picker: normal tap remains unchanged; a 5-second hold can
     # restrict a generator to checked outputs without modifying the player save schema.
     fresh(page)
     check(engine+' generator secret uses 5 second hold',page.evaluate('GENERATOR_SECRET_HOLD_MS===5000'))
     page.evaluate("openGeneratorSecret('gen_cafe',document.querySelector('.cell.gen'))")
     check(engine+' generator secret lists cafe outputs',page.locator('#generatorSecretOptions input').count()==2)
-    page.locator('#generatorSecretOptions input[value="drink1"]').evaluate("e=>{e.checked=true;e.dispatchEvent(new Event('change',{bubbles:true}))}")
+    page.locator('#generatorSecretOptions label').filter(has=page.locator('input[value="drink1"]')).click()
     page.locator('#generatorSecretSave').click()
     check(engine+' generator secret stored separately',page.evaluate("JSON.parse(localStorage.getItem(GENERATOR_SECRET_KEY)).gen_cafe.join(',')==='drink1'&&!Object.hasOwn(S,'generatorSecret')"))
-    page.evaluate("Math.random=()=>0.99")
+    page.evaluate("window.originalRandom=Math.random;Math.random=()=>0.99")
     before_count=page.evaluate("countBoard().drink1||0")
     page.evaluate("generatorTap(S.board.indexOf('gen_cafe'))")
     check(engine+' checked generator output is forced',page.evaluate("(countBoard().drink1||0)")==before_count+1)
-    page.evaluate("openGeneratorSecret('gen_cafe')")
+    page.evaluate("Math.random=window.originalRandom;delete window.originalRandom;openGeneratorSecret('gen_cafe')")
     page.locator('#generatorSecretReset').click();page.locator('#generatorSecretClose').click()
     check(engine+' generator secret reset restores normal pool',page.evaluate("generatorPool('gen_cafe').length===ITEMS.gen_cafe.p.length&&!generatorSecret.gen_cafe"))
 
@@ -251,14 +251,19 @@ def run_offline(browser, engine):
     else:
         # WebKit route interception is not a true transport outage. A killed local origin is
         # exercised by tests/origin_offline.py against the same release instead.
-        check(engine+' offline shell cached',page.evaluate("""async()=>{for(const name of await caches.keys()){if(!name.startsWith('rin-harbor-'))continue;const cache=await caches.open(name);const keys=(await cache.keys()).map(r=>r.url);if(keys.some(u=>u.includes('game.js?v=secretpicker2')))return true}return false}"""))
+        check(engine+' offline shell cached',page.evaluate("""async()=>{const cache=await caches.open('rin-harbor-'+BUILD);const script=document.querySelector('script[src^="game.js"]').src;return !!(await cache.match(script))}"""))
     check(engine+' save survives offline phase',page.evaluate("S.coins===4321&&S.book.fish3===1"))
     context.close()
 
 def main():
+    from board_size import run_board_size
     with sync_playwright() as p:
         for engine,browser_type in [('chromium',p.chromium),('webkit',p.webkit)]:
-            browser=browser_type.launch();run_suite(browser,engine);run_offline(browser,engine);browser.close()
+            browser=browser_type.launch()
+            try:
+                run_suite(browser,engine);run_offline(browser,engine)
+                if not INLINE:run_board_size(browser,engine,URL,check,OUT)
+            finally:browser.close()
     if not INLINE:
         # Public/local HTTP release assets and endpoint health.
         for path in ['index.html','game.js','item-art.js','youth.css','sw.js','assets/art-hd/hero.webp','assets/video/title-loop.mp4','assets/video/repair-5.mp4']:

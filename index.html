@@ -13,7 +13,7 @@
 <link rel="icon" type="image/png" sizes="512x512" href="assets/art-v1/icon-512.png">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="preload" as="image" href="assets/art-hd/hero.webp">
-<link rel="stylesheet" href="youth.css?v=secretpicker1">
+<link rel="stylesheet" href="youth.css?v=board-size1">
 <!-- Replaces item-art-levels.js and warehouse.js. Features are integrated before startup. -->
 </head>
 <body data-view="opening">
@@ -224,15 +224,24 @@
 <div id="generatorSecretViewer" class="viewer generatorSecretViewer" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="generatorSecretTitle">
   <div class="generatorSecretPanel">
     <div class="viewerHead"><b id="generatorSecretTitle">屋台の裏設定</b><button id="generatorSecretClose" class="off">閉じる</button></div>
-    <p class="generatorSecretLead">出したいものを選んでね。5秒長押ししたときだけ開く秘密メニューです。</p>
-    <div id="generatorSecretOptions" class="generatorSecretOptions"></div>
-    <p id="generatorSecretNote" class="tiny"></p>
-    <div class="generatorSecretActions"><button id="generatorSecretReset">通常に戻す</button><button id="generatorSecretSave" class="primary">保存</button></div>
+    <div class="generatorSecretBody">
+      <p class="generatorSecretLead">屋台を5秒長押しすると開く秘密メニューです。</p>
+      <section class="generatorBoardSettings" aria-labelledby="generatorBoardLabel">
+        <label id="generatorBoardLabel" for="generatorBoardSize">盤面のマス数（すべての屋台で共通）</label>
+        <select id="generatorBoardSize" aria-describedby="generatorBoardHelp generatorBoardNote"></select>
+        <p id="generatorBoardHelp" class="tiny">標準は6×6の36マス。縮小時は外側のアイテムを空きマスへ移します。入り切らない場合は変更できません。</p>
+        <p id="generatorBoardNote" class="tiny" role="status" aria-live="polite"></p>
+      </section>
+      <b class="generatorOutputLabel">この屋台から出すアイテム</b>
+      <div id="generatorSecretOptions" class="generatorSecretOptions"></div>
+      <p id="generatorSecretNote" class="tiny"></p>
+    </div>
+    <div class="generatorSecretActions"><button id="generatorSecretReset">抽選を通常に戻す</button><button id="generatorSecretSave" class="primary">保存</button></div>
   </div>
 </div>
 
 <script src="item-art.js?v=guide1"></script>
-<script src="game.js?v=secretpicker2"></script>
+<script src="game.js?v=board-size1"></script>
 <noscript>遊ぶにはJavaScriptを有効にしてください。</noscript>
 </body>
 </html>
