@@ -13,7 +13,7 @@
 <link rel="icon" type="image/png" sizes="512x512" href="assets/art-v1/icon-512.png">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="preload" as="image" href="assets/art-hd/hero.webp">
-<link rel="stylesheet" href="youth.css?v=ordersrail2">
+<link rel="stylesheet" href="youth.css?v=secretpicker1">
 <!-- Replaces item-art-levels.js and warehouse.js. Features are integrated before startup. -->
 </head>
 <body data-view="opening">
@@ -221,8 +221,18 @@
   </div>
 </div>
 
+<div id="generatorSecretViewer" class="viewer generatorSecretViewer" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="generatorSecretTitle">
+  <div class="generatorSecretPanel">
+    <div class="viewerHead"><b id="generatorSecretTitle">屋台の裏設定</b><button id="generatorSecretClose" class="off">閉じる</button></div>
+    <p class="generatorSecretLead">出したいものを選んでね。20秒長押ししたときだけ開く秘密メニューです。</p>
+    <div id="generatorSecretOptions" class="generatorSecretOptions"></div>
+    <p id="generatorSecretNote" class="tiny"></p>
+    <div class="generatorSecretActions"><button id="generatorSecretReset">通常に戻す</button><button id="generatorSecretSave" class="primary">保存</button></div>
+  </div>
+</div>
+
 <script src="item-art.js?v=guide1"></script>
-<script src="game.js?v=ordersrail1"></script>
+<script src="game.js?v=secretpicker1"></script>
 <noscript>遊ぶにはJavaScriptを有効にしてください。</noscript>
 </body>
 </html>
